@@ -70,7 +70,12 @@ def find_or_create_product(name, unit_price=None):
     conn.close(); return row
 
 def parse_items(text):
-    s=text.lower().strip()
+    s=re.sub(r"\s+"," ",(text or "").lower().strip())
+    # Accept natural sales phrases without confusing normal questions:
+    # "I sold 5 coffee", "sold 5 coffee", "today sold 5 coffee", "5 coffee sold"
+    s=re.sub(r"^(?:today|todays|today's|i|we)\s+","",s)
+    s=re.sub(r"^(?:sold|sell|sale)\s+","",s)
+    s=re.sub(r"\s+(?:sold|sale)$","",s)
     # Split common multi-item messages: "2 coffee, 3 tea" / "2 coffee and 3 tea"
     parts=re.split(r"\s*(?:,|\band\b|\+)\s*",s)
     items=[]
@@ -240,7 +245,7 @@ def create_sales():
     stamp=add_sales(items,payload.get("type","Sale"),payload.get("date"))
     saved=[{"date":stamp,"type":payload.get("type","Sale"),"product":d["product"]["name"],
             "quantity":d["quantity"],"unit_price":round(d["selling_price"],2),
-            "total":round(d["revenue"],2),"profit":round(d["profit"],2)} for d in items]
+            "total":round(d["revenue"],2),"profit":round(d["profit"],2),"cost_known":d.get("cost_known",1)} for d in items]
     return jsonify(ok=True,message="Saved "+", ".join(f'{d["quantity"]} × {d["product"]["name"]}' for d in items),sales=saved,summary=summary("today"))
 
 @app.post("/api/sales/manual")
@@ -307,7 +312,7 @@ def api_summary(): return jsonify({p:summary(p) for p in ["today","week","month"
 def sales():
     conn=get_db()
     rows=conn.execute("""SELECT s.id,s.sold_at,s.sale_type,p.name product,s.quantity,
-    s.selling_price,s.cost_price,s.revenue,s.profit
+    s.selling_price,s.cost_price,s.revenue,s.profit,s.cost_known
     FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC LIMIT 500""").fetchall()
     conn.close(); return jsonify([dict(r) for r in rows])
 
