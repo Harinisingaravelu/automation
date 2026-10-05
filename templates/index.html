@@ -149,7 +149,24 @@ function renderAnalytics(){
  $('analyticsProducts').innerHTML=arr.slice(0,7).map(([n,v])=>'<div class="stat-item"><span><b>'+esc(n)+'</b><br>'+v.qty+' units</span><span><b>'+money(v.revenue)+'</b><br><em class="profit">'+money(v.profit)+' profit</em></span></div>').join('')||'<div class="empty">Add sales to generate analytics.</div>';
  const total=state.sales.reduce((s,x)=>s+ +x.revenue,0),prof=state.sales.reduce((s,x)=>s+ +x.profit,0),margin=total?prof/total*100:0;const best=arr[0];$('insights').innerHTML='<div class="stat-item"><span>Total recorded revenue</span><b>'+money(total)+'</b></div><div class="stat-item"><span>Total recorded profit</span><b class="profit">'+money(prof)+'</b></div><div class="stat-item"><span>Overall profit margin</span><b>'+margin.toFixed(1)+'%</b></div><div class="stat-item"><span>Top revenue product</span><b>'+esc(best?.[0]||'—')+'</b></div>';
 }
-async function assistantSend(){const input=$('assistantInput'),txt=input.value.trim();if(!txt)return;addBubble('user',txt);input.value='';try{const r=await fetch('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt})});const d=await r.json();addBubble('bot',(d.message||'Could not save.')+(d.sales?'\n'+d.sales.map(x=>x.product+': '+x.quantity+' × '+money(x.unit_price)+' = '+money(x.total)).join('\n'):''));if(r.ok){await loadData();toast('Sale data saved successfully')}}catch(e){addBubble('bot','I could not connect to the sales database. Please try again.')}}function addBubble(type,text){const div=document.createElement('div');div.className='bubble '+type;div.innerHTML=esc(text).replace(/\n/g,'<br>');$('messages').appendChild(div);$('messages').scrollTop=$('messages').scrollHeight}
+async function assistantSend(){
+ const input=$('assistantInput'),txt=input.value.trim(); if(!txt)return;
+ addBubble('user',txt); input.value='';
+ const saleLike=/^\s*\d+\s+[a-z]/i.test(txt) || /\b(sold|sell|sale)\b.*\b\d+\b/i.test(txt);
+ try{
+   const endpoint=saleLike?'/api/sales':'/api/assistant';
+   const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt})});
+   const d=await r.json();
+   if(!r.ok){addBubble('bot',d.message||'I could not process that.');return}
+   if(saleLike){
+     addBubble('bot',(d.message||'Sale saved.')+(d.sales?'\n'+d.sales.map(x=>x.product+': '+x.quantity+' × '+money(x.unit_price)+' = '+money(x.total)).join('\n'):''));
+     await loadData(); toast('Sale data saved successfully');
+   }else{
+     addBubble('bot',d.message||'I could not find that information.');
+   }
+ }catch(e){addBubble('bot','I could not connect to SALES FLOW right now. Please try again.')}
+}
+function addBubble(type,text){const div=document.createElement('div');div.className='bubble '+type;div.innerHTML=esc(text).replace(/\n/g,'<br>');$('messages').appendChild(div);$('messages').scrollTop=$('messages').scrollHeight}
 async function saveManual(){const p={product:$('addProduct').value.trim(),quantity:$('addQty').value,unit_price:$('addPrice').value,type:$('addType').value,date:$('addDate').value};if(!p.product||!p.quantity||p.unit_price===''){toast('Product, quantity and price are required');return}const r=await fetch('/api/sales/manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}),d=await r.json();if(r.ok){toast('Sale saved successfully');clearManual();await loadData()}else toast(d.message||'Could not save sale')}
 function clearManual(){$('addProduct').value='';$('addQty').value='';$('addPrice').value='';$('addDate').value=new Date().toISOString().slice(0,10)}
 async function resetData(){if(confirm('Delete all saved sales data? This cannot be undone.')){await fetch('/api/reset',{method:'POST'});toast('Sales records reset');await loadData()}}
