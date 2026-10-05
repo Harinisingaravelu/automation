@@ -20,7 +20,8 @@ def init_db():
         name TEXT UNIQUE NOT NULL,
         cost_price REAL NOT NULL DEFAULT 0,
         selling_price REAL NOT NULL DEFAULT 0,
-        stock INTEGER NOT NULL DEFAULT 0
+        stock INTEGER NOT NULL DEFAULT 0,
+        cost_known INTEGER NOT NULL DEFAULT 1
     );
     CREATE TABLE IF NOT EXISTS sales (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,6 +33,7 @@ def init_db():
         cost_price REAL NOT NULL,
         revenue REAL NOT NULL,
         profit REAL NOT NULL,
+        cost_known INTEGER NOT NULL DEFAULT 1,
         FOREIGN KEY(product_id) REFERENCES products(id)
     );
     """)
@@ -39,6 +41,11 @@ def init_db():
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(sales)").fetchall()}
     if "sale_type" not in cols:
         conn.execute("ALTER TABLE sales ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'Sale'")
+    if "cost_known" not in cols:
+        conn.execute("ALTER TABLE sales ADD COLUMN cost_known INTEGER NOT NULL DEFAULT 1")
+    pcols = {r["name"] for r in conn.execute("PRAGMA table_info(products)").fetchall()}
+    if "cost_known" not in pcols:
+        conn.execute("ALTER TABLE products ADD COLUMN cost_known INTEGER NOT NULL DEFAULT 1")
     defaults = [
         ("T-Shirt",500,800,100),("Shirt",600,1000,75),("Jeans",900,1400,50),
         ("Shoes",1200,1800,30),("Cap",150,300,120),("Coffee",30,50,0),("Tea",10,20,0)
@@ -57,7 +64,7 @@ def find_or_create_product(name, unit_price=None):
     if row:
         conn.close(); return row
     price=float(unit_price or 0)
-    conn.execute("INSERT INTO products(name,cost_price,selling_price,stock) VALUES(?,?,?,0)",(clean,0,price))
+    conn.execute("INSERT INTO products(name,cost_price,selling_price,stock,cost_known) VALUES(?,?,?,?,0)",(clean,0,price))
     conn.commit()
     row=conn.execute("SELECT * FROM products WHERE lower(name)=lower(?)",(clean,)).fetchone()
     conn.close(); return row
@@ -81,8 +88,10 @@ def parse_items(text):
         p=find_or_create_product(name, amount/qty if amount is not None else None)
         unit=float(amount/qty) if amount is not None else float(p["selling_price"])
         cost=float(p["cost_price"])
+        known=int(p["cost_known"])==1 if "cost_known" in p.keys() else cost>0
         result.append({"product":p,"quantity":qty,"selling_price":unit,"cost_price":cost,
-                       "revenue":unit*qty,"profit":(unit-cost)*qty})
+                       "cost_known":known,"revenue":unit*qty,
+                       "profit":(unit-cost)*qty if known else 0})
     return result,None
 
 def add_sales(items,sale_type="Sale",sale_date=None):
@@ -91,8 +100,8 @@ def add_sales(items,sale_type="Sale",sale_date=None):
     for d in items:
         p=d["product"]
         conn.execute("""INSERT INTO sales
-        (sold_at,sale_type,product_id,quantity,selling_price,cost_price,revenue,profit)
-        VALUES(?,?,?,?,?,?,?,?)""",(stamp,sale_type,p["id"],d["quantity"],d["selling_price"],d["cost_price"],d["revenue"],d["profit"]))
+        (sold_at,sale_type,product_id,quantity,selling_price,cost_price,revenue,profit,cost_known)
+        VALUES(?,?,?,?,?,?,?,?,?)""",(stamp,sale_type,p["id"],d["quantity"],d["selling_price"],d["cost_price"],d["revenue"],d["profit"],d.get("cost_known",1)))
         conn.execute("UPDATE products SET stock=MAX(stock-?,0) WHERE id=?",(d["quantity"],p["id"]))
     conn.commit(); conn.close()
     return stamp
@@ -242,10 +251,54 @@ def manual_sale():
     except: return jsonify(ok=False,message="Quantity and rupees must be numbers."),400
     if qty<=0 or unit<0: return jsonify(ok=False,message="Enter valid quantity and rupees."),400
     prod=find_or_create_product(p.get("product",""),unit)
-    d={"product":prod,"quantity":qty,"selling_price":unit,"cost_price":float(prod["cost_price"]),
-       "revenue":qty*unit,"profit":(unit-float(prod["cost_price"]))*qty}
+    try:
+        cost_value=float(p["cost_price"]) if p.get("cost_price","") not in ("",None) else float(prod["cost_price"])
+    except:
+        return jsonify(ok=False,message="Cost price must be a number."),400
+    if cost_value<0:
+        return jsonify(ok=False,message="Cost price cannot be negative."),400
+    conn=get_db(); conn.execute("UPDATE products SET cost_price=?,cost_known=? WHERE id=?",(cost_value,1 if p.get("cost_price") not in ("",None) else int(prod["cost_known"]),prod["id"])); conn.commit()
+    prod=conn.execute("SELECT * FROM products WHERE id=?",(prod["id"],)).fetchone(); conn.close()
+    known=int(prod["cost_known"])==1
+    d={"product":prod,"quantity":qty,"selling_price":unit,"cost_price":float(prod["cost_price"]),"cost_known":known,
+       "revenue":qty*unit,"profit":(unit-float(prod["cost_price"]))*qty if known else 0}
     stamp=add_sales([d],p.get("type","Sale"),p.get("date"))
     return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date=stamp)
+
+@app.put("/api/products/<int:product_id>")
+def update_product(product_id):
+    p=request.get_json(silent=True) or {}
+    name=re.sub(r"\s+"," ",str(p.get("name","")).strip())
+    try:
+        selling=float(p.get("selling_price",0)); cost=float(p.get("cost_price",0)); stock=int(p.get("stock",0))
+    except:
+        return jsonify(ok=False,message="Price and stock values must be valid numbers."),400
+    if not name or selling<0 or cost<0 or stock<0:
+        return jsonify(ok=False,message="Enter valid product details."),400
+    conn=get_db()
+    try:
+        conn.execute("UPDATE products SET name=?,selling_price=?,cost_price=?,stock=?,cost_known=1 WHERE id=?",(name,selling,cost,stock,product_id))
+        if conn.total_changes==0:
+            conn.close(); return jsonify(ok=False,message="Product not found."),404
+        conn.commit()
+        row=conn.execute("SELECT * FROM products WHERE id=?",(product_id,)).fetchone()
+        conn.close()
+        return jsonify(ok=True,product=dict(row))
+    except sqlite3.IntegrityError:
+        conn.close(); return jsonify(ok=False,message="A product with that name already exists."),409
+
+@app.get("/api/insights")
+def api_insights():
+    conn=get_db()
+    total=conn.execute("SELECT COALESCE(SUM(revenue),0) revenue,COALESCE(SUM(profit),0) profit,COALESCE(SUM(quantity),0) items,COUNT(*) orders FROM sales").fetchone()
+    avg=conn.execute("SELECT COALESCE(AVG(revenue),0) value FROM (SELECT sold_at,SUM(revenue) revenue FROM sales GROUP BY sold_at)").fetchone()
+    best_day=conn.execute("SELECT date(sold_at) day,SUM(revenue) revenue,SUM(profit) profit FROM sales GROUP BY day ORDER BY revenue DESC LIMIT 1").fetchone()
+    low=conn.execute("SELECT name,stock FROM products WHERE stock<=10 ORDER BY stock ASC,name ASC LIMIT 10").fetchall()
+    conn.close()
+    revenue=float(total["revenue"] or 0); profit=float(total["profit"] or 0)
+    return jsonify(revenue=revenue,profit=profit,items=int(total["items"] or 0),orders=int(total["orders"] or 0),
+                   average_order_value=float(avg["value"] or 0),margin=(profit/revenue*100 if revenue else 0),
+                   best_day=dict(best_day) if best_day else None,low_stock=[dict(x) for x in low])
 
 @app.get("/api/summary")
 def api_summary(): return jsonify({p:summary(p) for p in ["today","week","month","all"]})
