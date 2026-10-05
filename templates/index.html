@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SalesFlow — WhatsApp Sales & Profit Automation</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e7eaf0;--accent:#2563eb;--green:#16a34a;--red:#dc2626}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#fff;border-bottom:1px solid var(--line);padding:18px 5%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+.brand{font-weight:800;font-size:21px}.brand span{color:var(--accent)}.badge{font-size:12px;background:#eef4ff;color:var(--accent);padding:7px 10px;border-radius:999px}
+main{max-width:1200px;margin:28px auto;padding:0 20px}.hero{margin-bottom:22px}.hero h1{margin:0 0 7px;font-size:30px}.hero p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 4px 18px #17203308}.label{font-size:13px;color:var(--muted)}.value{font-size:27px;font-weight:800;margin-top:8px}
+.layout{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-top:18px}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}.panel h2{font-size:18px;margin:0 0 14px}
+.chat{height:320px;background:#f0f5f1;border-radius:13px;padding:15px;overflow:auto}.msg{max-width:80%;padding:10px 12px;border-radius:12px;margin:8px 0;font-size:14px;line-height:1.4}.bot{background:#fff}.user{background:#d9fdd3;margin-left:auto}.composer{display:flex;gap:8px;margin-top:10px}.composer input{flex:1;padding:12px;border:1px solid var(--line);border-radius:10px;outline:none}.btn{border:0;background:var(--accent);color:#fff;padding:11px 15px;border-radius:10px;cursor:pointer;font-weight:700}.btn.secondary{background:#eef2f7;color:#334155}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.status{font-size:13px;color:var(--muted);margin-top:8px}
+canvas{width:100%;height:220px;border:1px solid var(--line);border-radius:12px;background:#fff}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}}@media(max-width:520px){.grid{grid-template-columns:1fr}.hero h1{font-size:25px}}
+</style>
+</head>
+<body>
+<header><div class="brand">Sales<span>Flow</span></div><div class="badge">WhatsApp Sales & Profit Automation</div></header>
+<main>
+<section class="hero"><h1>Sales & Profit Dashboard</h1><p>Record sales using simple messages and instantly see revenue, cost and profit.</p></section>
+<section class="grid">
+<div class="card"><div class="label">Today's Revenue</div><div class="value" id="revenue">₹0</div></div>
+<div class="card"><div class="label">Today's Profit</div><div class="value" id="profit">₹0</div></div>
+<div class="card"><div class="label">Items Sold</div><div class="value" id="items">0</div></div>
+<div class="card"><div class="label">Orders</div><div class="value" id="orders">0</div></div>
+</section>
+<section class="layout">
+<div class="panel"><h2>WhatsApp-style Sales Assistant</h2>
+<div class="chat" id="chat"><div class="msg bot">Hi! 👋 Send a sale like <b>sold 5 t-shirts</b>.</div></div>
+<div class="composer"><input id="message" placeholder="e.g. sold 5 t-shirts" onkeydown="if(event.key==='Enter')sendSale()"><button class="btn" onclick="sendSale()">Record Sale</button></div>
+<div class="status" id="status"></div></div>
+<div class="panel"><h2>Quick Reports</h2>
+<div class="actions"><button class="btn secondary" onclick="loadData()">Refresh</button><a class="btn" href="/api/export">Export CSV</a><button class="btn secondary" onclick="resetSales()">Reset Demo</button></div>
+<div id="top">Best product: —</div><p class="status">Data is stored in the app's SQLite database.</p>
+</div></section>
+<section class="panel" style="margin-top:18px"><h2>Recent Sales</h2><div style="overflow:auto"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Revenue</th><th>Profit</th></tr></thead><tbody id="sales"></tbody></table></div></section>
+<section class="panel" style="margin-top:18px"><h2>Daily Revenue & Profit</h2><canvas id="chart" width="1100" height="220"></canvas></section>
+</main>
+<script>
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+async function loadData(){
+ const s=await fetch('/api/summary').then(r=>r.json()), t=s.today;
+ document.getElementById('revenue').textContent=money(t.revenue);document.getElementById('profit').textContent=money(t.profit);
+ document.getElementById('items').textContent=t.items;document.getElementById('orders').textContent=t.orders;
+ document.getElementById('top').textContent='Best product: '+(t.top_product?t.top_product.name+' ('+t.top_product.qty+' items)':'—');
+ const rows=await fetch('/api/sales').then(r=>r.json()), el=document.getElementById('sales');
+ el.innerHTML=rows.map(x=>'<tr><td>'+x.sold_at+'</td><td>'+x.product+'</td><td>'+x.quantity+'</td><td>'+money(x.revenue)+'</td><td>'+money(x.profit)+'</td></tr>').join('');
+ const c=await fetch('/api/chart').then(r=>r.json()); draw(c.daily);
+}
+async function sendSale(){
+ const input=document.getElementById('message'), text=input.value.trim();if(!text)return;
+ const chat=document.getElementById('chat');chat.insertAdjacentHTML('beforeend','<div class="msg user">'+escapeHtml(text)+'</div>');input.value='';
+ const r=await fetch('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
+ const d=await r.json();chat.insertAdjacentHTML('beforeend','<div class="msg bot">'+(d.message||'Something went wrong.')+(d.sale?'<br>Revenue: <b>'+money(d.sale.revenue)+'</b> · Profit: <b>'+money(d.sale.profit)+'</b>':'')+'</div>');chat.scrollTop=chat.scrollHeight;
+ document.getElementById('status').textContent=r.ok?'Sale saved successfully.':'Please try again with a supported product.';
+ if(r.ok)loadData();
+}
+async function resetSales(){if(!confirm('Reset all demo sales?'))return;await fetch('/api/reset',{method:'POST'});loadData();}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+function draw(data){
+ const cv=document.getElementById('chart'),ctx=cv.getContext('2d'),w=cv.width,h=cv.height;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#dfe4ec';ctx.fillStyle='#6b7280';ctx.font='12px system-ui';
+ if(!data.length){ctx.fillText('No sales yet — record a sale above.',30,40);return}
+ const max=Math.max(...data.map(x=>x.revenue),1), gap=w/data.length;
+ data.forEach((x,i)=>{const bh=(x.revenue/max)*(h-55),x0=i*gap+18;ctx.fillStyle='#2563eb';ctx.fillRect(x0,h-30-bh,gap-28,bh);ctx.fillStyle='#6b7280';ctx.fillText(x.day.slice(5),x0,h-10);ctx.fillStyle='#172033';ctx.fillText(money(x.revenue),x0,Math.max(14,h-38-bh))});
+}
+loadData();
+</script>
+</body>
+</html>
