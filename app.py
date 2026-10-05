@@ -64,7 +64,7 @@ def find_or_create_product(name, unit_price=None):
     if row:
         conn.close(); return row
     price=float(unit_price or 0)
-    conn.execute("INSERT INTO products(name,cost_price,selling_price,stock,cost_known) VALUES(?,?,?,?,0)",(clean,0,price))
+    conn.execute("INSERT INTO products(name,cost_price,selling_price,stock,cost_known) VALUES(?,?,?,?,?)",(clean,0,price,0,0))
     conn.commit()
     row=conn.execute("SELECT * FROM products WHERE lower(name)=lower(?)",(clean,)).fetchone()
     conn.close(); return row
@@ -138,6 +138,13 @@ def no_cache(response):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
     return response
+
+@app.get("/api/health")
+def health():
+    conn=get_db()
+    row=conn.execute("SELECT COUNT(*) count FROM sales").fetchone()
+    conn.close()
+    return jsonify(ok=True,database="sqlite",sales_records=int(row["count"] or 0))
 
 @app.get("/api/products")
 def products(): return jsonify([dict(r) for r in product_rows()])
@@ -277,7 +284,7 @@ def manual_sale():
         FROM sales s JOIN products p ON p.id=s.product_id
         WHERE s.id=?""",(inserted_ids[0],)).fetchone()
     conn.close()
-    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date=stamp,stored=True,record=dict(saved),record_ids=inserted_ids)
+    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date=stamp,stored=True,record=dict(saved),record_ids=inserted_ids,stored_count=len(inserted_ids))
 
 @app.put("/api/products/<int:product_id>")
 def update_product(product_id):
