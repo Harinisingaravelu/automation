@@ -169,7 +169,7 @@ async function assistantSend(){
    if(!r.ok){removeTyping();addBubble('bot',d.message||'I could not process that.');return}
    if(!saleLike) removeTyping();
    if(saleLike){
-     addBubble('bot',(d.message||'Sale saved.')+(d.sales?'\n'+d.sales.map(x=>x.product+': '+x.quantity+' × '+money(x.unit_price)+' = '+money(x.total)).join('\n'):''));
+     addBubble('bot',(d.message||'Sale saved.')+(d.sales?'\n'+d.sales.map(x=>x.product+': '+x.quantity+' × '+money(x.unit_price)+' = '+money(x.total)+(x.cost_known?'':' · cost not set, profit pending')).join('\n'):''));
      await loadData(); toast('Sale data saved successfully');
    }else{
      addBubble('bot',d.message||'I could not find that information.');
