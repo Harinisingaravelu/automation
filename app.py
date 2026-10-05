@@ -127,7 +127,7 @@ def create_sales():
     saved=[{"date":stamp,"type":payload.get("type","Sale"),"product":d["product"]["name"],
             "quantity":d["quantity"],"unit_price":round(d["selling_price"],2),
             "total":round(d["revenue"],2),"profit":round(d["profit"],2)} for d in items]
-    return jsonify(ok=True,message="Saved "+", ".join(f'{d["quantity"]} × {d["product"]["name"]}' for d in items),sales:saved,summary:summary("today"))
+    return jsonify(ok=True,message="Saved "+", ".join(f'{d["quantity"]} × {d["product"]["name"]}' for d in items),sales=saved,summary=summary("today"))
 
 @app.post("/api/sales/manual")
 def manual_sale():
