@@ -170,7 +170,15 @@ function showView(name){
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 function useExample(x){$('assistantInput').value=x;$('assistantInput').focus()}
 async function loadData(){
-  try{const [s,p,i]=await Promise.all([fetch('/api/sales').then(r=>r.json()),fetch('/api/products').then(r=>r.json()),fetch('/api/insights').then(r=>r.json())]);state.sales=s;state.products=p;state.insights=i;renderAll()}catch(e){toast('Could not load business data')}
+  try{
+    const getJson=async url=>{const r=await fetch(url,{cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.message||url+' failed');return d};
+    const [s,p,i]=await Promise.all([getJson('/api/sales'),getJson('/api/products'),getJson('/api/insights')]);
+    if(!Array.isArray(s)||!Array.isArray(p))throw new Error('Invalid database response');
+    state.sales=s;state.products=p;state.insights=i;renderAll();
+  }catch(e){
+    console.error('SALES FLOW load error:',e);
+    toast('Could not load saved sales data. Please refresh.');
+  }
 }
 function renderAll(){renderDashboard();renderRecords();renderProducts();renderAnalytics()}
 function periodTotals(days){const now=new Date();const start=new Date(now);start.setHours(0,0,0,0);start.setDate(start.getDate()-(days-1));return state.sales.filter(x=>new Date(x.sold_at.replace(' ','T'))>=start).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
@@ -185,7 +193,7 @@ function renderDashboard(){
  $('topProducts').innerHTML=top.length?top.map(([n,v])=>'<div class="product-row"><div class="product-top"><span class="product-name">'+esc(n)+'</span><b>'+v.qty+' units</b></div><div class="product-meta">'+money(v.revenue)+' revenue · '+money(v.profit)+' profit</div><div class="bar"><span style="width:'+Math.max(5,v.qty/max*100)+'%"></span></div></div>').join(''):'<div class="empty">No sales yet. Add your first sale.</div>';
  $('recentRows').innerHTML=state.sales.slice(0,8).map(rowHtml).join('')||'<tr><td colspan="8" class="empty">No sales records yet.</td></tr>';drawOverview();
 }
-function rowHtml(x){return '<tr><td>'+esc(x.sold_at)+'</td><td>'+esc(x.product)+'</td><td>'+x.quantity+'</td><td>'+money(x.selling_price)+'</td><td>'+money(x.revenue)+'</td><td>'+money(x.cost_price*x.quantity)+'</td><td class="profit">'+money(x.profit)+'</td><td><span class="badge">Completed</span></td></tr>'}
+function rowHtml(x){return '<tr><td>'+esc(x.sold_at)+'</td><td>'+esc(x.sale_type||'Sale')+'</td><td>'+esc(x.product)+'</td><td>'+x.quantity+'</td><td>'+money(x.selling_price)+'</td><td>'+money(x.revenue)+'</td><td>'+money(x.cost_price*x.quantity)+'</td><td class="profit">'+(x.cost_known?money(x.profit):'<span class="warning">Pending</span>')+'</td><td><span class="badge">Saved</span></td></tr>'}
 function drawOverview(){
  const dates=[],rev=[],profit=[];const now=new Date();for(let i=state.range-1;i>=0;i--){const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-i);const key=d.toISOString().slice(0,10);dates.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));const a=state.sales.filter(x=>x.sold_at.slice(0,10)===key);rev.push(a.reduce((s,x)=>s+ +x.revenue,0));profit.push(a.reduce((s,x)=>s+ +x.profit,0))}
  const ctx=$('overviewChart');if(state.charts.overview)state.charts.overview.destroy();state.charts.overview=new Chart(ctx,{type:'line',data:{labels:dates,datasets:[{label:'Revenue',data:rev,borderColor:'#2563eb',backgroundColor:'#2563eb15',fill:true,tension:.35},{label:'Profit',data:profit,borderColor:'#16a34a',backgroundColor:'#16a34a12',fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#edf0f4'}},x:{grid:{display:false}}}}});
@@ -236,7 +244,7 @@ async function saveManual(){
    const r=await fetch('/api/sales/manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
    const d=await r.json();
    if(!r.ok||!d.stored||!d.record){toast(d.message||'Could not confirm database save');return}
-   lastStoredCount=d.stored_count||1;showSaveSuccess(d.record);clearManual();await loadData();
+   lastStoredCount=d.stored_count||d.record_ids?.length||1;showSaveSuccess(d.record);clearManual();await loadData();
  }catch(e){toast('Could not connect to the database. Sale was not confirmed.')}
  finally{btn?.classList.remove('save-btn-loading');if(btn)btn.textContent='Save Sale'}
 }
