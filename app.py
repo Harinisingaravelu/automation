@@ -1,32 +1,31 @@
 from flask import Flask, render_template, request, jsonify, Response
 import sqlite3, re, csv, io, os
-from datetime import datetime, date
+from datetime import datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-DB = BASE / 'sales.db'
+DB = BASE / "sales.db"
 app = Flask(__name__)
-
 
 def get_db():
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     return conn
 
-
 def init_db():
     conn = get_db()
-    conn.executescript('''
+    conn.executescript("""
     CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
-        cost_price REAL NOT NULL,
-        selling_price REAL NOT NULL,
+        cost_price REAL NOT NULL DEFAULT 0,
+        selling_price REAL NOT NULL DEFAULT 0,
         stock INTEGER NOT NULL DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS sales (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sold_at TEXT NOT NULL,
+        sale_type TEXT NOT NULL DEFAULT 'Sale',
         product_id INTEGER NOT NULL,
         quantity INTEGER NOT NULL,
         selling_price REAL NOT NULL,
@@ -35,136 +34,149 @@ def init_db():
         profit REAL NOT NULL,
         FOREIGN KEY(product_id) REFERENCES products(id)
     );
-    ''')
-    count = conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]
-    if count == 0:
-        products = [
-            ('T-Shirt', 500, 800, 100),
-            ('Shirt', 600, 1000, 75),
-            ('Jeans', 900, 1400, 50),
-            ('Shoes', 1200, 1800, 30),
-            ('Cap', 150, 300, 120),
-        ]
-        conn.executemany('INSERT INTO products(name,cost_price,selling_price,stock) VALUES(?,?,?,?)', products)
+    """)
+    # Safe migration for an older database.
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(sales)").fetchall()}
+    if "sale_type" not in cols:
+        conn.execute("ALTER TABLE sales ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'Sale'")
+    defaults = [
+        ("T-Shirt",500,800,100),("Shirt",600,1000,75),("Jeans",900,1400,50),
+        ("Shoes",1200,1800,30),("Cap",150,300,120),("Coffee",30,50,0),("Tea",10,20,0)
+    ]
+    for p in defaults:
+        conn.execute("INSERT OR IGNORE INTO products(name,cost_price,selling_price,stock) VALUES(?,?,?,?)", p)
     conn.commit(); conn.close()
-
 
 def product_rows():
-    conn = get_db(); rows = conn.execute('SELECT * FROM products ORDER BY name').fetchall(); conn.close(); return rows
+    conn=get_db(); rows=conn.execute("SELECT * FROM products ORDER BY name").fetchall(); conn.close(); return rows
 
+def find_or_create_product(name, unit_price=None):
+    clean = re.sub(r"\s+"," ",name.strip()).strip()
+    conn=get_db()
+    row=conn.execute("SELECT * FROM products WHERE lower(name)=lower(?)",(clean,)).fetchone()
+    if row:
+        conn.close(); return row
+    price=float(unit_price or 0)
+    conn.execute("INSERT INTO products(name,cost_price,selling_price,stock) VALUES(?,?,?,0)",(clean,0,price))
+    conn.commit()
+    row=conn.execute("SELECT * FROM products WHERE lower(name)=lower(?)",(clean,)).fetchone()
+    conn.close(); return row
 
-def parse_sale(text):
-    """Simple beginner-friendly natural language parser. Examples:
-    'sold 5 tshirts', '5 t-shirts', 'sold 3 shirts for 3000', '2 jeans'
-    """
-    s = text.lower().strip()
-    products = product_rows()
-    found = None
-    for p in products:
-        name = p['name'].lower()
-        variants = {name, name.replace('-', ' '), name.replace(' ', ''), name.replace('shirt','shirts')}
-        if any(v and v in s for v in variants):
-            found = p; break
-    if not found:
-        return None, 'I could not identify the product. Try: "sold 5 t-shirts".'
-    qty_match = re.search(r'\b(\d+)\b', s)
-    if not qty_match:
-        return None, 'Please include quantity. Example: "sold 5 t-shirts".'
-    qty = int(qty_match.group(1))
-    if qty <= 0:
-        return None, 'Quantity must be greater than 0.'
-    # Optional total amount in message; otherwise use master selling price.
-    amount_match = re.search(r'(?:for|total|amount)\s*(?:rs\.?|₹)?\s*(\d+(?:\.\d+)?)', s)
-    if amount_match:
-        total_amount = float(amount_match.group(1))
-        sell = total_amount / qty
-    else:
-        sell = float(found['selling_price'])
-    cost = float(found['cost_price'])
-    revenue = sell * qty
-    profit = (sell - cost) * qty
-    return {'product': found, 'quantity': qty, 'selling_price': sell, 'cost_price': cost, 'revenue': revenue, 'profit': profit}, None
+def parse_items(text):
+    s=text.lower().strip()
+    # Split common multi-item messages: "2 coffee, 3 tea" / "2 coffee and 3 tea"
+    parts=re.split(r"\s*(?:,|\band\b|\+)\s*",s)
+    items=[]
+    for part in parts:
+        m=re.search(r"\b(\d+)\s+([a-z][a-z0-9 -]*?)(?:\s+(?:for|total|amount|at|@)\s*(?:rs\.?|₹)?\s*([\d,]+(?:\.\d+)?))?\s*$",part)
+        if not m: continue
+        qty=int(m.group(1)); name=m.group(2).strip(" -")
+        if qty<=0 or not name: continue
+        amount=float(m.group(3).replace(",","")) if m.group(3) else None
+        items.append((qty,name,amount))
+    if not items:
+        return None,"Use: 2 coffee, 3 tea  (or: 2 coffee at ₹50, 3 tea at ₹20)"
+    result=[]
+    for qty,name,amount in items:
+        p=find_or_create_product(name, amount/qty if amount is not None else None)
+        unit=float(amount/qty) if amount is not None else float(p["selling_price"])
+        cost=float(p["cost_price"])
+        result.append({"product":p,"quantity":qty,"selling_price":unit,"cost_price":cost,
+                       "revenue":unit*qty,"profit":(unit-cost)*qty})
+    return result,None
 
-
-def add_sale(data):
-    conn = get_db(); now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    p = data['product']
-    conn.execute('INSERT INTO sales(sold_at,product_id,quantity,selling_price,cost_price,revenue,profit) VALUES(?,?,?,?,?,?,?)',
-                 (now, p['id'], data['quantity'], data['selling_price'], data['cost_price'], data['revenue'], data['profit']))
-    conn.execute('UPDATE products SET stock = MAX(stock - ?, 0) WHERE id=?', (data['quantity'], p['id']))
+def add_sales(items,sale_type="Sale",sale_date=None):
+    conn=get_db()
+    stamp=(sale_date or datetime.now().strftime("%Y-%m-%d")) + " " + datetime.now().strftime("%H:%M:%S")
+    for d in items:
+        p=d["product"]
+        conn.execute("""INSERT INTO sales
+        (sold_at,sale_type,product_id,quantity,selling_price,cost_price,revenue,profit)
+        VALUES(?,?,?,?,?,?,?,?)""",(stamp,sale_type,p["id"],d["quantity"],d["selling_price"],d["cost_price"],d["revenue"],d["profit"]))
+        conn.execute("UPDATE products SET stock=MAX(stock-?,0) WHERE id=?",(d["quantity"],p["id"]))
     conn.commit(); conn.close()
-    return now
+    return stamp
 
-
-def summary(period='today'):
-    conn = get_db()
-    if period == 'today':
-        where = "date(s.sold_at)=date('now','localtime')"
-    elif period == 'week':
-        where = "date(s.sold_at) >= date('now','localtime','-6 day')"
-    elif period == 'month':
-        where = "strftime('%Y-%m',s.sold_at)=strftime('%Y-%m','now','localtime')"
-    else:
-        where = '1=1'
-    row = conn.execute(f'''SELECT COALESCE(SUM(quantity),0) items, COUNT(*) orders,
-        COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(quantity*cost_price),0) cost,
-        COALESCE(SUM(profit),0) profit FROM sales s WHERE {where}''').fetchone()
-    top = conn.execute(f'''SELECT p.name, SUM(s.quantity) qty, SUM(s.revenue) revenue
-        FROM sales s JOIN products p ON p.id=s.product_id WHERE {where}
-        GROUP BY p.id ORDER BY qty DESC LIMIT 1''').fetchone()
+def summary(period="today"):
+    conn=get_db()
+    if period=="today": where="date(s.sold_at)=date('now','localtime')"
+    elif period=="week": where="date(s.sold_at)>=date('now','localtime','-6 day')"
+    elif period=="month": where="strftime('%Y-%m',s.sold_at)=strftime('%Y-%m','now','localtime')"
+    else: where="1=1"
+    row=conn.execute(f"""SELECT COALESCE(SUM(quantity),0) items,COUNT(*) orders,
+    COALESCE(SUM(revenue),0) revenue,COALESCE(SUM(quantity*cost_price),0) cost,
+    COALESCE(SUM(profit),0) profit FROM sales s WHERE {where}""").fetchone()
+    top=conn.execute(f"""SELECT p.name,SUM(s.quantity) qty,SUM(s.revenue) revenue
+    FROM sales s JOIN products p ON p.id=s.product_id WHERE {where}
+    GROUP BY p.id ORDER BY qty DESC LIMIT 1""").fetchone()
     conn.close()
-    return {**dict(row), 'top_product': dict(top) if top else None}
+    return {**dict(row),"top_product":dict(top) if top else None}
 
+@app.route("/")
+def home(): return render_template("index.html")
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+@app.get("/api/products")
+def products(): return jsonify([dict(r) for r in product_rows()])
 
-@app.get('/api/products')
-def products():
-    return jsonify([dict(r) for r in product_rows()])
+@app.post("/api/sales")
+def create_sales():
+    payload=request.get_json(silent=True) or {}
+    items,err=parse_items(payload.get("message",""))
+    if err: return jsonify(ok=False,message=err),400
+    stamp=add_sales(items,payload.get("type","Sale"),payload.get("date"))
+    saved=[{"date":stamp,"type":payload.get("type","Sale"),"product":d["product"]["name"],
+            "quantity":d["quantity"],"unit_price":round(d["selling_price"],2),
+            "total":round(d["revenue"],2),"profit":round(d["profit"],2)} for d in items]
+    return jsonify(ok=True,message="Saved "+", ".join(f'{d["quantity"]} × {d["product"]["name"]}' for d in items),sales:saved,summary:summary("today"))
 
-@app.post('/api/sales')
-def create_sale():
-    payload = request.get_json(silent=True) or {}
-    text = payload.get('message','')
-    data, err = parse_sale(text)
-    if err: return jsonify({'ok':False,'message':err}), 400
-    now = add_sale(data)
-    return jsonify({'ok':True,'message':f"Sale recorded: {data['quantity']} × {data['product']['name']}",
-                    'sale': {'date':now,'product':data['product']['name'],'quantity':data['quantity'],
-                             'selling_price':round(data['selling_price'],2),'revenue':round(data['revenue'],2),'profit':round(data['profit'],2)},
-                    'summary': summary('today')})
+@app.post("/api/sales/manual")
+def manual_sale():
+    p=request.get_json(silent=True) or {}
+    try:
+        qty=int(p.get("quantity",0)); unit=float(p.get("unit_price",0))
+    except: return jsonify(ok=False,message="Quantity and rupees must be numbers."),400
+    if qty<=0 or unit<0: return jsonify(ok=False,message="Enter valid quantity and rupees."),400
+    prod=find_or_create_product(p.get("product",""),unit)
+    d={"product":prod,"quantity":qty,"selling_price":unit,"cost_price":float(prod["cost_price"]),
+       "revenue":qty*unit,"profit":(unit-float(prod["cost_price"]))*qty}
+    stamp=add_sales([d],p.get("type","Sale"),p.get("date"))
+    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date:stamp)
 
-@app.get('/api/summary')
-def api_summary():
-    return jsonify({p: summary(p) for p in ['today','week','month','all']})
+@app.get("/api/summary")
+def api_summary(): return jsonify({p:summary(p) for p in ["today","week","month","all"]})
 
-@app.get('/api/sales')
+@app.get("/api/sales")
 def sales():
-    conn = get_db(); rows = conn.execute('''SELECT s.*, p.name product FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC LIMIT 100''').fetchall(); conn.close()
-    return jsonify([dict(r) for r in rows])
+    conn=get_db()
+    rows=conn.execute("""SELECT s.id,s.sold_at,s.sale_type,p.name product,s.quantity,
+    s.selling_price,s.cost_price,s.revenue,s.profit
+    FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC LIMIT 500""").fetchall()
+    conn.close(); return jsonify([dict(r) for r in rows])
 
-@app.get('/api/chart')
+@app.get("/api/chart")
 def chart():
-    conn = get_db()
-    daily = conn.execute("SELECT date(sold_at) day, SUM(revenue) revenue, SUM(profit) profit FROM sales GROUP BY day ORDER BY day DESC LIMIT 7").fetchall()
-    by_product = conn.execute("SELECT p.name, SUM(s.quantity) qty, SUM(s.revenue) revenue, SUM(s.profit) profit FROM sales s JOIN products p ON p.id=s.product_id GROUP BY p.id ORDER BY revenue DESC").fetchall()
-    conn.close()
-    return jsonify({'daily':[dict(r) for r in reversed(daily)], 'products':[dict(r) for r in by_product]})
+    conn=get_db()
+    daily=conn.execute("SELECT date(sold_at) day,SUM(revenue) revenue,SUM(profit) profit FROM sales GROUP BY day ORDER BY day DESC LIMIT 7").fetchall()
+    by_product=conn.execute("SELECT p.name,SUM(s.quantity) qty,SUM(s.revenue) revenue,SUM(s.profit) profit FROM sales s JOIN products p ON p.id=s.product_id GROUP BY p.id ORDER BY revenue DESC").fetchall()
+    conn.close(); return jsonify(daily=[dict(r) for r in reversed(daily)],products=[dict(r) for r in by_product])
 
-@app.get('/api/export')
+@app.get("/api/export")
 def export_csv():
-    conn = get_db(); rows = conn.execute('''SELECT s.sold_at, p.name product, s.quantity, s.selling_price, s.cost_price, s.revenue, s.profit FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC''').fetchall(); conn.close()
-    out = io.StringIO(); w = csv.writer(out); w.writerow(['Date','Product','Quantity','Selling Price','Cost Price','Revenue','Profit'])
-    for r in rows: w.writerow([r['sold_at'],r['product'],r['quantity'],r['selling_price'],r['cost_price'],r['revenue'],r['profit']])
-    return Response(out.getvalue(), mimetype='text/csv', headers={'Content-Disposition':'attachment; filename=sales_report.csv'})
+    conn=get_db()
+    rows=conn.execute("""SELECT s.sold_at,s.sale_type,p.name product,s.quantity,s.selling_price,
+    s.cost_price,s.revenue,s.profit FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC""").fetchall()
+    conn.close(); out=io.StringIO(); w=csv.writer(out)
+    w.writerow(["Date","Type","Product","Quantity","Unit Price (₹)","Cost Price (₹)","Total (₹)","Profit (₹)"])
+    for r in rows: w.writerow([r["sold_at"],r["sale_type"],r["product"],r["quantity"],r["selling_price"],r["cost_price"],r["revenue"],r["profit"]])
+    return Response(out.getvalue(),mimetype="text/csv",headers={"Content-Disposition":"attachment; filename=sales_data.csv"})
 
-@app.post('/api/reset')
+@app.post("/api/reset")
 def reset():
-    conn=get_db(); conn.execute('DELETE FROM sales'); conn.execute('UPDATE products SET stock=CASE name WHEN "T-Shirt" THEN 100 WHEN "Shirt" THEN 75 WHEN "Jeans" THEN 50 WHEN "Shoes" THEN 30 WHEN "Cap" THEN 120 ELSE stock END'); conn.commit(); conn.close(); return jsonify({'ok':True})
+    conn=get_db(); conn.execute("DELETE FROM sales")
+    conn.execute("""UPDATE products SET stock=CASE name WHEN 'T-Shirt' THEN 100 WHEN 'Shirt' THEN 75
+    WHEN 'Jeans' THEN 50 WHEN 'Shoes' THEN 30 WHEN 'Cap' THEN 120 ELSE stock END""")
+    conn.commit(); conn.close(); return jsonify(ok=True)
 
 init_db()
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+if __name__=="__main__":
+    app.run(host="0.0.0.0",port=int(os.environ.get("PORT",5000)),debug=False)
