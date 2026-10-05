@@ -118,6 +118,91 @@ def home(): return render_template("index.html")
 @app.get("/api/products")
 def products(): return jsonify([dict(r) for r in product_rows()])
 
+def assistant_reply(message):
+    """Friendly, data-grounded assistant. Never invents business numbers."""
+    text = (message or "").strip()
+    low = text.lower()
+    conn = get_db()
+
+    # Detect a product mentioned by the user from the real product catalogue.
+    products = conn.execute("SELECT id,name FROM products ORDER BY length(name) DESC").fetchall()
+    mentioned = next((p for p in products if p["name"].lower() in low), None)
+
+    def totals(where="1=1", params=()):
+        return conn.execute("""SELECT COALESCE(SUM(quantity),0) items, COUNT(*) orders,
+            COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(profit),0) profit
+            FROM sales WHERE """ + where, params).fetchone()
+
+    def product_total(pid, where="1=1", params=()):
+        return conn.execute("""SELECT COALESCE(SUM(quantity),0) qty, COUNT(*) orders,
+            COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(profit),0) profit
+            FROM sales WHERE product_id=? AND """ + where, (pid, *params)).fetchone()
+
+    # Greetings / normal conversation: no business numbers are fabricated.
+    if re.search(r"\b(hi|hello|hey|good morning|good afternoon|good evening|hii|hai)\b", low):
+        conn.close()
+        return "Hi! 😊 I'm your SALES FLOW assistant. You can ask me about your real sales, revenue, profit, products, or today's performance."
+
+    if re.search(r"\b(thank you|thanks|thank)\b", low):
+        conn.close()
+        return "You're welcome! 😊 Whenever you need your sales numbers, just ask me."
+
+    today_where = "date(sold_at)=date('now','localtime')"
+    week_where = "date(sold_at)>=date('now','localtime','-6 day')"
+    month_where = "strftime('%Y-%m',sold_at)=strftime('%Y-%m','now','localtime')"
+
+    # Product-specific questions are always answered from the sales table.
+    if mentioned and re.search(r"\b(sales|sold|sell|sold how many|quantity|units|how much)\b", low):
+        r = product_total(mentioned["id"])
+        rt = product_total(mentioned["id"], today_where)
+        conn.close()
+        if r["qty"] == 0:
+            return f"I checked your saved sales data. There are no recorded sales for {mentioned['name']} yet."
+        return (f"Sure 😊 From your saved data, {mentioned['name']} has {r['qty']} units sold "
+                f"across {r['orders']} records, with revenue of ₹{r['revenue']:,.2f} and profit of ₹{r['profit']:,.2f}. "
+                f"Today: {rt['qty']} units, revenue ₹{rt['revenue']:,.2f}, profit ₹{rt['profit']:,.2f}.")
+
+    # Today / week / month / all business performance.
+    if re.search(r"\b(today|todays|today's|this day)\b", low):
+        r = totals(today_where)
+        conn.close()
+        if r["orders"] == 0:
+            return "I checked today's records. There are no sales saved for today yet."
+        return f"Today you have {r['orders']} sales records and {r['items']} items sold. Revenue is ₹{r['revenue']:,.2f} and profit is ₹{r['profit']:,.2f}."
+
+    if re.search(r"\b(this week|weekly|week)\b", low):
+        r = totals(week_where)
+        conn.close()
+        if r["orders"] == 0:
+            return "I checked the last 7 days. I don't have any saved sales records for that period."
+        return f"Over the last 7 days, you recorded {r['orders']} sales records and {r['items']} items. Revenue: ₹{r['revenue']:,.2f}. Profit: ₹{r['profit']:,.2f}."
+
+    if re.search(r"\b(this month|monthly|month)\b", low):
+        r = totals(month_where)
+        conn.close()
+        if r["orders"] == 0:
+            return "I checked this month's records. There are no saved sales for this month yet."
+        return f"This month so far: {r['orders']} records, {r['items']} items sold, ₹{r['revenue']:,.2f} revenue, and ₹{r['profit']:,.2f} profit."
+
+    if re.search(r"\b(profit|revenue|sales|orders|items|units|performance|business)\b", low):
+        r = totals()
+        conn.close()
+        if r["orders"] == 0:
+            return "I checked your database, but there are no saved sales records yet. Add a sale first and I'll report the real numbers."
+        return f"Here’s the current picture from your saved data: {r['orders']} records, {r['items']} items sold, ₹{r['revenue']:,.2f} revenue, and ₹{r['profit']:,.2f} profit."
+
+    conn.close()
+    return "I can help with your real SALES FLOW data 😊 Try asking: “What is today's profit?”, “How many coffee were sold?”, “What is my revenue this month?”, or “How many orders do I have?”"
+
+
+@app.post("/api/assistant")
+def assistant():
+    payload = request.get_json(silent=True) or {}
+    message = payload.get("message", "")
+    if not message.strip():
+        return jsonify(ok=False, message="Please type a message."), 400
+    return jsonify(ok=True, message=assistant_reply(message))
+
 @app.post("/api/sales")
 def create_sales():
     payload=request.get_json(silent=True) or {}
