@@ -1,71 +1,158 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SalesFlow — Sales & Profit Automation</title>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SALES FLOW — Sales & Profit Analytics</title>
+<meta name="description" content="Turn Sales Messages into Business Insights.">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial;background:#f5f7fb;color:#172033}header{background:#fff;border-bottom:1px solid #e5e7eb;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}.brand{font-size:22px;font-weight:800}.brand b{color:#2563eb}.pill{font-size:12px;background:#eef4ff;color:#2563eb;padding:7px 11px;border-radius:20px}
-main{max-width:1250px;margin:28px auto;padding:0 20px}h1{margin:0 0 6px;font-size:30px}.muted{color:#6b7280}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0}.card,.panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;box-shadow:0 4px 18px #17203308}.label{font-size:13px;color:#6b7280}.value{font-size:27px;font-weight:800;margin-top:7px}.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel h2{font-size:18px;margin:0 0 14px}.form{display:grid;grid-template-columns:1.2fr .7fr .8fr .9fr auto;gap:8px}.input,select{width:100%;padding:11px;border:1px solid #d9dee8;border-radius:10px;background:#fff}.btn{border:0;border-radius:10px;padding:11px 15px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer}.btn.gray{background:#eef2f7;color:#334155}.chat{height:250px;background:#eef5ef;border-radius:12px;padding:12px;overflow:auto}.msg{max-width:82%;padding:9px 11px;border-radius:11px;margin:7px 0;font-size:14px}.bot{background:#fff}.user{background:#d9fdd3;margin-left:auto}.composer{display:flex;gap:8px;margin-top:9px}.composer input{flex:1}.tip{font-size:12px;color:#64748b;margin-top:8px}.tablewrap{overflow:auto;max-height:420px}table{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #e8ebf0}th{color:#64748b;background:#fafbfc;position:sticky;top:0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.form{grid-template-columns:1fr 1fr}.form .btn{grid-column:span 2}}@media(max-width:520px){.grid{grid-template-columns:1fr}.form{grid-template-columns:1fr}.form .btn{grid-column:auto}}
-</style></head>
+:root{--blue:#2563eb;--blue2:#3b82f6;--navy:#0f172a;--green:#16a34a;--orange:#f59e0b;--red:#dc2626;--bg:#f6f8fc;--card:#fff;--line:#e7ebf2;--muted:#64748b;--shadow:0 12px 35px rgba(15,23,42,.07);--radius:18px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--navy)}button,input,select{font:inherit}button,a{transition:.2s ease}.hidden{display:none!important}
+.landing{min-height:100vh;background:radial-gradient(circle at 85% 10%,#dbeafe 0,transparent 32%),linear-gradient(135deg,#fff 0,#f5f9ff 60%,#eefcf4 100%);padding:24px 6% 50px}.landing-nav{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:auto}.brand{display:flex;align-items:center;gap:11px;font-weight:900;letter-spacing:-.6px;font-size:21px}.logo{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,var(--blue),#60a5fa);display:grid;place-items:center;color:white;box-shadow:0 9px 20px #2563eb35}.logo svg{width:23px}.landing-hero{max-width:1200px;margin:75px auto 55px;display:grid;grid-template-columns:1.05fr .95fr;gap:55px;align-items:center}.eyebrow{display:inline-flex;gap:8px;align-items:center;background:#eaf2ff;color:#1d4ed8;padding:8px 12px;border-radius:99px;font-size:12px;font-weight:800}.landing h1{font-size:clamp(42px,6vw,72px);line-height:1.02;letter-spacing:-3px;margin:20px 0 18px}.landing h1 span{color:var(--blue)}.landing-copy{font-size:18px;line-height:1.7;color:#526174;max-width:620px}.hero-actions{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:12px 17px;background:var(--blue);color:#fff;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 20px #2563eb22}.btn:hover{transform:translateY(-1px);filter:brightness(.97)}.btn.secondary{background:#fff;color:var(--navy);border:1px solid var(--line);box-shadow:none}.btn.green{background:var(--green)}.btn.orange{background:var(--orange)}.hero-card{background:#0f172a;border-radius:28px;padding:18px;box-shadow:0 28px 60px #0f172a28;transform:rotate(1deg)}.mini-window{background:#f8fafc;border-radius:20px;overflow:hidden}.mini-top{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.mini-body{padding:17px}.mini-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.mini-kpi{background:#fff;border:1px solid var(--line);padding:12px;border-radius:13px}.mini-kpi small{color:var(--muted)}.mini-kpi strong{display:block;margin-top:6px}.fake-chart{height:145px;margin-top:12px;border-radius:15px;background:linear-gradient(180deg,#eff6ff,#fff);position:relative;overflow:hidden}.fake-chart:after{content:"";position:absolute;left:-5%;right:-5%;bottom:20px;height:90px;border-top:4px solid var(--blue);transform:skewY(-8deg);box-shadow:0 -12px 0 -10px #93c5fd}.feature-grid{max-width:1200px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.feature{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}.feature-icon{width:42px;height:42px;border-radius:12px;background:#eef4ff;color:var(--blue);display:grid;place-items:center;font-size:20px}.feature h3{font-size:15px;margin:14px 0 7px}.feature p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+
+.app{display:none;min-height:100vh}.sidebar{position:fixed;left:0;top:0;bottom:0;width:250px;background:#fff;border-right:1px solid var(--line);padding:22px 15px;z-index:20;display:flex;flex-direction:column}.side-brand{padding:2px 10px 24px}.nav{display:flex;flex-direction:column;gap:4px}.nav button{border:0;background:transparent;text-align:left;padding:11px 13px;border-radius:11px;color:#536175;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:11px}.nav button:hover,.nav button.active{background:#eef4ff;color:var(--blue)}.nav-sep{height:1px;background:var(--line);margin:14px 8px}.side-bottom{margin-top:auto}.main{margin-left:250px;padding:28px 32px 50px;max-width:1600px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:24px}.topbar h1{font-size:29px;margin:0;letter-spacing:-1px}.topbar p{margin:5px 0 0;color:var(--muted);font-size:14px}.date-chip{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 13px;color:#475569;font-size:13px}.view{display:none}.view.active{display:block}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:19px;box-shadow:var(--shadow);position:relative;overflow:hidden}.kpi:after{content:"";position:absolute;width:70px;height:70px;border-radius:50%;right:-28px;top:-28px;background:#eff6ff}.kpi-icon{width:38px;height:38px;border-radius:11px;background:#eef4ff;color:var(--blue);display:grid;place-items:center}.kpi.green .kpi-icon{background:#ecfdf3;color:var(--green)}.kpi.orange .kpi-icon{background:#fff7ed;color:#ea580c}.kpi.red .kpi-icon{background:#fef2f2;color:var(--red)}.kpi-label{font-size:12px;color:var(--muted);margin-top:15px}.kpi-value{font-size:28px;font-weight:900;margin-top:4px}.change{font-size:11px;margin-top:6px}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:var(--muted)}.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}.panel-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:17px}.panel-title h2{margin:0;font-size:17px}.panel-title p{margin:4px 0 0;color:var(--muted);font-size:12px}.filter-row{display:flex;gap:6px;flex-wrap:wrap}.filter{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 10px;font-size:11px;color:#475569;cursor:pointer}.filter.active{background:#eef4ff;color:var(--blue);border-color:#cfe0ff;font-weight:800}.two-col{display:grid;grid-template-columns:1.6fr 1fr;gap:18px}.chart-box{height:310px}.products-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.product-row{border:1px solid var(--line);border-radius:13px;padding:13px}.product-top{display:flex;justify-content:space-between;gap:10px}.product-name{font-weight:800}.product-meta{font-size:11px;color:var(--muted);margin-top:5px}.bar{height:7px;background:#eef2f7;border-radius:99px;margin-top:11px;overflow:hidden}.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--blue),#60a5fa);border-radius:99px}.section-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px;font-size:12px}th,td{padding:13px 10px;border-bottom:1px solid #edf0f4;text-align:left;white-space:nowrap}th{font-size:11px;color:#64748b;background:#fafbfc}.badge{padding:5px 8px;border-radius:99px;background:#ecfdf3;color:#15803d;font-size:10px;font-weight:800}.profit{color:var(--green);font-weight:800}.empty{padding:35px;text-align:center;color:var(--muted);font-size:13px}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:6px;color:#475569}.input,select{width:100%;padding:11px 12px;border:1px solid #dbe1ea;border-radius:11px;outline:none;background:#fff;color:var(--navy)}.input:focus,select:focus{border-color:#93b4f8;box-shadow:0 0 0 3px #2563eb12}.full{grid-column:1/-1}.form-actions{display:flex;gap:9px;margin-top:15px}.chat-shell{display:grid;grid-template-columns:1fr 290px;gap:18px}.chat-card{background:#eaf4ec;border-radius:18px;min-height:520px;padding:16px;display:flex;flex-direction:column}.chat-head{background:#fff;border-radius:13px;padding:13px;display:flex;align-items:center;gap:10px}.bot-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#60a5fa);color:#fff;display:grid;place-items:center;font-weight:900}.chat-messages{flex:1;overflow:auto;padding:15px 4px}.bubble{max-width:78%;padding:10px 12px;border-radius:13px;margin:8px 0;font-size:13px;line-height:1.55}.bubble.bot{background:#fff}.bubble.user{background:#d8fdd0;margin-left:auto}.composer{display:flex;gap:8px;background:#fff;border-radius:14px;padding:7px}.composer input{border:0;outline:0;flex:1;padding:9px}.hint-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}.hint-card h3{margin:0 0 12px;font-size:15px}.example{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:10px;margin:8px 0;font-size:12px;color:#475569;cursor:pointer}.stat-list{display:grid;gap:10px}.stat-item{display:flex;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:11px;font-size:12px}.report-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.report-card{padding:20px;border:1px solid var(--line);border-radius:16px;background:#fff}.report-card h3{margin:0 0 6px;font-size:15px}.report-card p{color:var(--muted);font-size:12px;line-height:1.6}.settings-list{display:grid;gap:12px;max-width:700px}.setting{display:flex;justify-content:space-between;align-items:center;padding:15px;border:1px solid var(--line);border-radius:13px}.setting strong{font-size:13px}.setting span{font-size:11px;color:var(--muted);display:block;margin-top:4px}.switch{width:42px;height:24px;border-radius:99px;background:#dbe2ec;position:relative}.switch:after{content:"";position:absolute;width:18px;height:18px;top:3px;left:3px;border-radius:50%;background:#fff}.switch.on{background:var(--blue)}.switch.on:after{left:21px}.toast{position:fixed;right:22px;bottom:22px;background:#0f172a;color:#fff;padding:12px 16px;border-radius:12px;font-size:12px;box-shadow:0 15px 30px #0003;z-index:99;opacity:0;transform:translateY(10px);pointer-events:none}.toast.show{opacity:1;transform:none}.mobile-menu{display:none}
+@media(max-width:1100px){.sidebar{width:220px}.main{margin-left:220px}.kpis{grid-template-columns:repeat(2,1fr)}.landing-hero{grid-template-columns:1fr}.feature-grid{grid-template-columns:repeat(2,1fr)}.two-col,.chat-shell{grid-template-columns:1fr}.report-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.sidebar{transform:translateX(-100%);transition:.25s;width:260px}.sidebar.open{transform:none}.main{margin-left:0;padding:20px 15px}.mobile-menu{display:inline-flex}.topbar{align-items:flex-start}.topbar h1{font-size:23px}.kpis{grid-template-columns:1fr 1fr}.section-grid,.products-grid,.form-grid,.report-grid{grid-template-columns:1fr}.landing-hero{margin-top:55px}.feature-grid{grid-template-columns:1fr}.landing h1{letter-spacing:-2px}.hero-card{transform:none}}
+@media(max-width:480px){.kpis{grid-template-columns:1fr}.topbar{display:block}.date-chip{display:inline-block;margin-top:12px}}
+</style>
+</head>
 <body>
-<header><div class="brand">Sales<b>Flow</b></div><div class="pill">Sales Data + Quantity + Date + Rupees</div></header>
-<main>
-<h1>Sales & Profit Dashboard</h1><p class="muted">Every sale you enter is stored as a separate data record.</p>
-<div class="grid">
-<div class="card"><div class="label">Today's Revenue</div><div class="value" id="revenue">₹0</div></div>
-<div class="card"><div class="label">Today's Profit</div><div class="value" id="profit">₹0</div></div>
-<div class="card"><div class="label">Items Sold</div><div class="value" id="items">0</div></div>
-<div class="card"><div class="label">Orders / Records</div><div class="value" id="orders">0</div></div>
-</div>
 
-<div class="panel" style="margin-bottom:18px"><h2>➕ Add Sales Data</h2>
-<div class="form">
-<input class="input" id="product" placeholder="Product e.g. Coffee">
-<input class="input" id="qty" type="number" min="1" placeholder="Quantity">
-<select id="type"><option>Sale</option><option>Wholesale</option><option>Retail</option><option>Online</option><option>Other</option></select>
-<input class="input" id="price" type="number" min="0" step="0.01" placeholder="Unit ₹">
-<input class="input" id="date" type="date">
-<button class="btn" onclick="manualSave()">Save Data</button>
-</div><div class="tip">Example: Product = Coffee, Quantity = 2, Unit ₹ = 50. Date and Type are also stored.</div>
-</div>
+<section id="landing" class="landing">
+  <nav class="landing-nav">
+    <div class="brand"><div class="logo">↗</div> SALES FLOW</div>
+    <button class="btn secondary" onclick="enterApp()">View Dashboard</button>
+  </nav>
+  <div class="landing-hero">
+    <div>
+      <div class="eyebrow">⚡ Smart Sales Automation</div>
+      <h1>Turn Every Sale<br>into an <span>Insight.</span></h1>
+      <p class="landing-copy">Track sales, calculate profit, understand your products and make smarter business decisions — all in one place.</p>
+      <div class="hero-actions"><button class="btn" onclick="enterApp()">Get Started →</button><button class="btn secondary" onclick="enterApp()">View Dashboard</button></div>
+    </div>
+    <div class="hero-card"><div class="mini-window"><div class="mini-top"><strong>SALES FLOW</strong><small>Business Overview</small></div><div class="mini-body"><div class="mini-kpis"><div class="mini-kpi"><small>Revenue</small><strong>₹24.5K</strong></div><div class="mini-kpi"><small>Profit</small><strong>₹8.2K</strong></div><div class="mini-kpi"><small>Orders</small><strong>42</strong></div></div><div class="fake-chart"></div></div></div></div>
+  </div>
+  <div class="feature-grid">
+    <div class="feature"><div class="feature-icon">💬</div><h3>Smart Sales Entry</h3><p>Send a simple message like “2 coffee, 3 tea” and organize it automatically.</p></div>
+    <div class="feature"><div class="feature-icon">₹</div><h3>Automated Profit Calculation</h3><p>Revenue, cost and profit are calculated from stored sales data.</p></div>
+    <div class="feature"><div class="feature-icon">📈</div><h3>Real-Time Analytics</h3><p>See performance trends, top products and business KPIs from your records.</p></div>
+    <div class="feature"><div class="feature-icon">📄</div><h3>Business Reports</h3><p>Review sales records and export your data for further analysis.</p></div>
+  </div>
+</section>
 
-<div class="layout">
-<div class="panel"><h2>💬 Quick WhatsApp-style Entry</h2>
-<div class="chat" id="chat"><div class="msg bot">Try: <b>2 coffee, 3 tea</b><br>For prices: <b>2 coffee at ₹50, 3 tea at ₹20</b></div></div>
-<div class="composer"><input class="input" id="message" placeholder="2 coffee, 3 tea" onkeydown="if(event.key==='Enter')send()"><button class="btn" onclick="send()">Save</button></div>
-<div class="tip">For new products without a saved price, include the price in the message.</div></div>
+<div id="app" class="app">
+<aside id="sidebar" class="sidebar">
+  <div class="side-brand"><div class="brand"><div class="logo">↗</div> SALES FLOW</div><div style="font-size:10px;color:#94a3b8;margin:8px 0 0 51px">Sales Intelligence</div></div>
+  <nav class="nav">
+    <button class="active" data-view="dashboard">▦ <span>Dashboard</span></button>
+    <button data-view="assistant">💬 <span>Sales Assistant</span></button>
+    <button data-view="add">＋ <span>Add Sale</span></button>
+    <button data-view="records">▤ <span>Sales Records</span></button>
+    <button data-view="products">□ <span>Products</span></button>
+    <button data-view="analytics">◔ <span>Analytics</span></button>
+    <button data-view="reports">▥ <span>Reports</span></button>
+    <button data-view="export">⇩ <span>Export</span></button>
+  </nav>
+  <div class="nav-sep"></div>
+  <div class="nav"><button data-view="settings">⚙ <span>Settings</span></button></div>
+  <div class="side-bottom"><div style="font-size:10px;color:#94a3b8;padding:10px">Turn Sales Messages into Business Insights.</div></div>
+</aside>
 
-<div class="panel"><h2>📊 Data Controls</h2>
-<div class="actions"><button class="btn gray" onclick="load()">Refresh</button><a class="btn" href="/api/export">Export CSV</a><button class="btn gray" onclick="resetData()">Reset</button></div>
-<p id="best" class="muted">Best product: —</p>
-<p class="muted">Stored fields: <b>Date, Type, Product, Quantity, Unit Price, Total Rupees, Cost Price, Profit.</b></p>
-</div>
-</div>
+<main class="main">
+  <div class="topbar">
+    <div style="display:flex;gap:12px;align-items:flex-start"><button class="btn secondary mobile-menu" onclick="toggleSide()">☰</button><div><h1 id="pageTitle">Good afternoon 👋</h1><p id="pageDesc">Here's your business performance overview.</p></div></div>
+    <div class="date-chip">📅 <span id="todayLabel"></span></div>
+  </div>
 
-<div class="panel" style="margin-top:18px"><h2>🗃️ Sales Data</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Type</th><th>Product</th><th>Quantity</th><th>Unit ₹</th><th>Total ₹</th><th>Cost ₹</th><th>Profit ₹</th></tr></thead><tbody id="rows"></tbody></table></div></div>
-</main>
+  <section id="view-dashboard" class="view active">
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-icon">₹</div><div class="kpi-label">Total Revenue</div><div class="kpi-value" id="kpiRevenue">₹0</div><div class="change" id="revChange">No previous period data</div></div>
+      <div class="kpi green"><div class="kpi-icon">↗</div><div class="kpi-label">Total Profit</div><div class="kpi-value" id="kpiProfit">₹0</div><div class="change" id="profitChange">No previous period data</div></div>
+      <div class="kpi orange"><div class="kpi-icon">▤</div><div class="kpi-label">Total Orders</div><div class="kpi-value" id="kpiOrders">0</div><div class="change neutral">Sales records stored</div></div>
+      <div class="kpi"><div class="kpi-icon">□</div><div class="kpi-label">Items Sold</div><div class="kpi-value" id="kpiItems">0</div><div class="change neutral">Units sold</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel"><div class="panel-title"><div><h2>Revenue & Profit Overview</h2><p>Performance from your real sales records</p></div><div class="filter-row"><button class="filter active" onclick="setRange(7,this)">7 Days</button><button class="filter" onclick="setRange(30,this)">30 Days</button><button class="filter" onclick="setRange(90,this)">90 Days</button></div></div><div class="chart-box"><canvas id="overviewChart"></canvas></div></div>
+      <div class="panel"><div class="panel-title"><div><h2>Top Selling Products</h2><p>Ranked by units sold</p></div></div><div id="topProducts" class="products-grid"></div></div>
+    </div>
+    <div class="panel" style="margin-top:18px"><div class="panel-title"><div><h2>Recent Sales</h2><p>Your latest sales activity</p></div><button class="btn secondary" onclick="showView('records')">View All Sales →</button></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Selling Price</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Status</th></tr></thead><tbody id="recentRows"></tbody></table></div></div>
+  </section>
+
+  <section id="view-assistant" class="view">
+    <div class="chat-shell"><div class="chat-card"><div class="chat-head"><div class="bot-avatar">SF</div><div><strong>Sales Assistant</strong><div style="font-size:11px;color:#64748b">Ready to organize your sales</div></div><span style="margin-left:auto;color:#16a34a;font-size:11px">● Online</span></div><div id="messages" class="chat-messages"><div class="bubble bot">Hi! Send me a sales message and I'll organize it for you.<br><br>Try <b>2 coffee, 3 tea</b> or <b>2 coffee at ₹50, 3 tea at ₹20</b>.</div></div><div class="composer"><input id="assistantInput" placeholder="Type your sales message..." onkeydown="if(event.key==='Enter')assistantSend()"><button class="btn" onclick="assistantSend()">Send</button></div></div><div class="hint-card"><h3>Quick examples</h3><div class="example" onclick="useExample('2 coffee, 3 tea')">2 coffee, 3 tea</div><div class="example" onclick="useExample('5 t-shirt at ₹800')">5 t-shirt at ₹800</div><div class="example" onclick="useExample('10 coffee at ₹50, 6 tea at ₹20')">10 coffee at ₹50, 6 tea at ₹20</div><h3 style="margin-top:24px">What gets stored?</h3><div class="stat-list"><div class="stat-item"><span>Product</span><b>✓</b></div><div class="stat-item"><span>Quantity</span><b>✓</b></div><div class="stat-item"><span>Date & Type</span><b>✓</b></div><div class="stat-item"><span>Revenue & Profit</span><b>✓</b></div></div></div></div>
+  </section>
+
+  <section id="view-add" class="view"><div class="panel" style="max-width:850px"><div class="panel-title"><div><h2>Add Sale</h2><p>Manually record a sale with complete business data.</p></div></div><div class="form-grid"><div class="field"><label>Product</label><input id="addProduct" class="input" placeholder="e.g. Coffee"></div><div class="field"><label>Quantity</label><input id="addQty" class="input" type="number" min="1" placeholder="2"></div><div class="field"><label>Sale Type</label><select id="addType"><option>Sale</option><option>Wholesale</option><option>Retail</option><option>Online</option><option>Other</option></select></div><div class="field"><label>Selling Price per Unit (₹)</label><input id="addPrice" class="input" type="number" min="0" step=".01" placeholder="50"></div><div class="field"><label>Date</label><input id="addDate" class="input" type="date"></div></div><div class="form-actions"><button class="btn" onclick="saveManual()">Save Sale</button><button class="btn secondary" onclick="clearManual()">Clear</button></div></div></section>
+
+  <section id="view-records" class="view"><div class="panel"><div class="panel-title"><div><h2>Sales Records</h2><p>Every saved transaction in one place.</p></div><a class="btn" href="/api/export">Export CSV</a></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Status</th></tr></thead><tbody id="allRows"></tbody></table></div></div></section>
+
+  <section id="view-products" class="view"><div class="panel"><div class="panel-title"><div><h2>Products</h2><p>Products are created automatically when you record a new item.</p></div></div><div id="productCards" class="products-grid"></div></div></section>
+
+  <section id="view-analytics" class="view"><div class="two-col"><div class="panel"><div class="panel-title"><div><h2>Revenue & Profit Trend</h2><p>Daily business performance</p></div></div><div class="chart-box"><canvas id="analyticsChart"></canvas></div></div><div class="panel"><div class="panel-title"><div><h2>Product Performance</h2><p>Revenue and profit contribution</p></div></div><div id="analyticsProducts"></div></div></div><div class="section-grid"><div class="panel"><div class="panel-title"><h2>Business Insights</h2></div><div id="insights" class="stat-list"></div></div><div class="panel"><div class="panel-title"><h2>Data Quality</h2></div><div class="stat-list"><div class="stat-item"><span>Stored sales records</span><b id="qualityRecords">0</b></div><div class="stat-item"><span>Unique products</span><b id="qualityProducts">0</b></div><div class="stat-item"><span>Export available</span><b>CSV</b></div></div></div></div></section>
+
+  <section id="view-reports" class="view"><div class="report-grid"><div class="report-card"><h3>Sales Summary</h3><p>Review total revenue, orders, units sold and profit from your stored records.</p><button class="btn" onclick="showView('analytics')">Open Analytics</button></div><div class="report-card"><h3>Product Performance</h3><p>Understand which products generate the most units, revenue and profit.</p><button class="btn secondary" onclick="showView('products')">View Products</button></div><div class="report-card"><h3>Data Export</h3><p>Download your sales records as CSV for Excel, Power BI or further analysis.</p><a class="btn green" href="/api/export">Download CSV</a></div></div></section>
+
+  <section id="view-export" class="view"><div class="panel" style="max-width:760px"><div class="panel-title"><div><h2>Export Center</h2><p>Take your business data with you.</p></div></div><div class="setting"><div><strong>Sales Data — CSV</strong><span>Date, type, product, quantity, prices, revenue and profit.</span></div><a class="btn" href="/api/export">Download CSV</a></div></div></section>
+
+  <section id="view-settings" class="view"><div class="panel"><div class="panel-title"><div><h2>Settings</h2><p>Simple controls for your SALES FLOW workspace.</p></div></div><div class="settings-list"><div class="setting"><div><strong>Automation status</strong><span>Sales messages can be parsed and saved automatically.</span></div><div class="switch on"></div></div><div class="setting"><div><strong>Business data storage</strong><span>Current deployment uses the application's database.</span></div><div class="switch on"></div></div><div class="setting"><div><strong>Reset sales records</strong><span>Delete all saved sales data. Products remain available.</span></div><button class="btn secondary" onclick="resetData()">Reset Data</button></div></div></div></section>
+</main></div>
+<div id="toast" class="toast"></div>
+
 <script>
+const state={sales:[],products:[],range:7,charts:{}};
+const $=id=>document.getElementById(id);
 const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
-document.getElementById('date').value=new Date().toISOString().slice(0,10);
-async function load(){
- const s=await fetch('/api/summary').then(r=>r.json()),t=s.today;
- revenue.textContent=money(t.revenue);profit.textContent=money(t.profit);items.textContent=t.items;orders.textContent=t.orders;
- best.textContent='Best product: '+(t.top_product?t.top_product.name+' ('+t.top_product.qty+' items)':'—');
- const data=await fetch('/api/sales').then(r=>r.json());
- rows.innerHTML=data.map(x=>'<tr><td>'+x.sold_at+'</td><td>'+x.sale_type+'</td><td>'+x.product+'</td><td>'+x.quantity+'</td><td>'+money(x.selling_price)+'</td><td>'+money(x.revenue)+'</td><td>'+money(x.cost_price*x.quantity)+'</td><td>'+money(x.profit)+'</td></tr>').join('');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2300)}
+function enterApp(){$('landing').style.display='none';$('app').style.display='block';loadData();showView('dashboard')}
+function toggleSide(){$('sidebar').classList.toggle('open')}
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
+  const titles={dashboard:['Good afternoon 👋',"Here's your business performance overview."],assistant:['Sales Assistant','Send your sales message and I’ll organize the data for you.'],add:['Add Sale','Record a new transaction with complete details.'],records:['Sales Records','Review every stored sales transaction.'],products:['Products','Understand your product catalogue and performance.'],analytics:['Analytics','Explore trends and business performance.'],reports:['Reports','Turn your sales data into useful business reports.'],export:['Export Center','Download your business data for further analysis.'],settings:['Settings','Manage your SALES FLOW workspace.']};
+  $('pageTitle').textContent=titles[name][0];$('pageDesc').textContent=titles[name][1];if(innerWidth<761)$('sidebar').classList.remove('open');
+  if(name==='analytics')renderAnalytics();if(name==='products')renderProducts();
 }
-async function manualSave(){
- const p={product:product.value.trim(),quantity:qty.value,unit_price:price.value,type:type.value,date:date.value};
- if(!p.product||!p.quantity||p.unit_price===''){alert('Product, Quantity and Unit ₹ are required.');return}
- const r=await fetch('/api/sales/manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}),d=await r.json();
- alert(d.message||'Saved');if(r.ok){product.value='';qty.value='';price.value='';load()}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+function useExample(x){$('assistantInput').value=x;$('assistantInput').focus()}
+async function loadData(){
+  try{const [s,p]=await Promise.all([fetch('/api/sales').then(r=>r.json()),fetch('/api/products').then(r=>r.json())]);state.sales=s;state.products=p;renderAll()}catch(e){toast('Could not load business data')}
 }
-async function send(){
- const input=document.getElementById('message'),txt=input.value.trim();if(!txt)return;
- chat.insertAdjacentHTML('beforeend','<div class="msg user">'+esc(txt)+'</div>');input.value='';
- const r=await fetch('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt})}),d=await r.json();
- chat.insertAdjacentHTML('beforeend','<div class="msg bot">'+esc(d.message||'Could not save.')+(d.sales?'<br>'+d.sales.map(x=>x.product+': '+x.quantity+' × '+money(x.unit_price)+' = '+money(x.total)).join('<br>'):'')+'</div>');
- chat.scrollTop=chat.scrollHeight;if(r.ok)load();
+function renderAll(){renderDashboard();renderRecords();renderProducts();renderAnalytics()}
+function periodTotals(days){const now=new Date();const start=new Date(now);start.setHours(0,0,0,0);start.setDate(start.getDate()-(days-1));return state.sales.filter(x=>new Date(x.sold_at.replace(' ','T'))>=start).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
+function previousTotals(days){const now=new Date();const end=new Date(now);end.setHours(0,0,0,0);end.setDate(end.getDate()-days);const start=new Date(end);start.setDate(start.getDate()-days);return state.sales.filter(x=>{const d=new Date(x.sold_at.replace(' ','T'));return d>=start&&d<end}).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
+function pct(a,b){if(!b)return null;return ((a-b)/b*100)}
+function changeText(id,current,previous){const p=pct(current,previous);$(id).className='change '+(p===null?'neutral':p>=0?'positive':'negative');$(id).textContent=p===null?'No previous period data':(p>=0?'↑ ':'↓ ')+Math.abs(p).toFixed(1)+'% vs previous period'}
+function renderDashboard(){
+ const t=periodTotals(state.range),p=previousTotals(state.range);$('kpiRevenue').textContent=money(t.revenue);$('kpiProfit').textContent=money(t.profit);$('kpiOrders').textContent=t.orders;$('kpiItems').textContent=t.items;changeText('revChange',t.revenue,p.revenue);changeText('profitChange',t.profit,p.profit);
+ const groups={};state.sales.forEach(x=>{const n=x.product;groups[n]??={qty:0,revenue:0,profit:0};groups[n].qty+=+x.quantity;groups[n].revenue+=+x.revenue;groups[n].profit+=+x.profit});
+ const top=Object.entries(groups).sort((a,b)=>b[1].qty-a[1].qty).slice(0,6),max=top[0]?.[1].qty||1;
+ $('topProducts').innerHTML=top.length?top.map(([n,v])=>'<div class="product-row"><div class="product-top"><span class="product-name">'+esc(n)+'</span><b>'+v.qty+' units</b></div><div class="product-meta">'+money(v.revenue)+' revenue · '+money(v.profit)+' profit</div><div class="bar"><span style="width:'+Math.max(5,v.qty/max*100)+'%"></span></div></div>').join(''):'<div class="empty">No sales yet. Add your first sale.</div>';
+ $('recentRows').innerHTML=state.sales.slice(0,8).map(rowHtml).join('')||'<tr><td colspan="8" class="empty">No sales records yet.</td></tr>';drawOverview();
 }
-async function resetData(){if(confirm('Delete all saved sales data?')){await fetch('/api/reset',{method:'POST'});load()}}
-function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-load();
-</script></body></html>
+function rowHtml(x){return '<tr><td>'+esc(x.sold_at)+'</td><td>'+esc(x.product)+'</td><td>'+x.quantity+'</td><td>'+money(x.selling_price)+'</td><td>'+money(x.revenue)+'</td><td>'+money(x.cost_price*x.quantity)+'</td><td class="profit">'+money(x.profit)+'</td><td><span class="badge">Completed</span></td></tr>'}
+function drawOverview(){
+ const dates=[],rev=[],profit=[];const now=new Date();for(let i=state.range-1;i>=0;i--){const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-i);const key=d.toISOString().slice(0,10);dates.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));const a=state.sales.filter(x=>x.sold_at.slice(0,10)===key);rev.push(a.reduce((s,x)=>s+ +x.revenue,0));profit.push(a.reduce((s,x)=>s+ +x.profit,0))}
+ const ctx=$('overviewChart');if(state.charts.overview)state.charts.overview.destroy();state.charts.overview=new Chart(ctx,{type:'line',data:{labels:dates,datasets:[{label:'Revenue',data:rev,borderColor:'#2563eb',backgroundColor:'#2563eb15',fill:true,tension:.35},{label:'Profit',data:profit,borderColor:'#16a34a',backgroundColor:'#16a34a12',fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#edf0f4'}},x:{grid:{display:false}}}}});
+}
+function setRange(n,el){state.range=n;document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderDashboard()}
+function renderRecords(){$('allRows').innerHTML=state.sales.map(x=>rowHtml(x).replace('<th>','')).join('')||'<tr><td colspan="9" class="empty">No sales records yet.</td></tr>'}
+function renderProducts(){
+ const groups={};state.sales.forEach(x=>{groups[x.product]??={qty:0,revenue:0,profit:0};groups[x.product].qty+=+x.quantity;groups[x.product].revenue+=+x.revenue;groups[x.product].profit+=+x.profit});
+ const names=[...new Set([...state.products.map(x=>x.name),...Object.keys(groups)])].sort();$('productCards').innerHTML=names.map(n=>{const g=groups[n]||{qty:0,revenue:0,profit:0};return '<div class="product-row"><div class="product-top"><span class="product-name">'+esc(n)+'</span><span class="badge">'+g.qty+' sold</span></div><div class="product-meta">Default selling price: '+money(state.products.find(p=>p.name===n)?.selling_price||0)+'</div><div style="display:flex;gap:18px;margin-top:12px;font-size:12px"><span>Revenue <b>'+money(g.revenue)+'</b></span><span>Profit <b class="profit">'+money(g.profit)+'</b></span></div></div>'}).join('')||'<div class="empty">No products yet.</div>';
+ $('qualityRecords').textContent=state.sales.length;$('qualityProducts').textContent=names.length;
+}
+function renderAnalytics(){
+ const dates=[],rev=[],profit=[];const now=new Date();for(let i=29;i>=0;i--){const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-i);const key=d.toISOString().slice(0,10);dates.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));const a=state.sales.filter(x=>x.sold_at.slice(0,10)===key);rev.push(a.reduce((s,x)=>s+ +x.revenue,0));profit.push(a.reduce((s,x)=>s+ +x.profit,0))}
+ const ctx=$('analyticsChart');if(state.charts.analytics)state.charts.analytics.destroy();state.charts.analytics=new Chart(ctx,{type:'bar',data:{labels:dates,datasets:[{label:'Revenue',data:rev,backgroundColor:'#3b82f6aa',borderRadius:5},{label:'Profit',data:profit,backgroundColor:'#16a34aaa',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}});
+ const groups={};state.sales.forEach(x=>{groups[x.product]??={qty:0,revenue:0,profit:0};groups[x.product].qty+=+x.quantity;groups[x.product].revenue+=+x.revenue;groups[x.product].profit+=+x.profit});const arr=Object.entries(groups).sort((a,b)=>b[1].revenue-a[1].revenue);
+ $('analyticsProducts').innerHTML=arr.slice(0,7).map(([n,v])=>'<div class="stat-item"><span><b>'+esc(n)+'</b><br>'+v.qty+' units</span><span><b>'+money(v.revenue)+'</b><br><em class="profit">'+money(v.profit)+' profit</em></span></div>').join('')||'<div class="empty">Add sales to generate analytics.</div>';
+ const total=state.sales.reduce((s,x)=>s+ +x.revenue,0),prof=state.sales.reduce((s,x)=>s+ +x.profit,0),margin=total?prof/total*100:0;const best=arr[0];$('insights').innerHTML='<div class="stat-item"><span>Total recorded revenue</span><b>'+money(total)+'</b></div><div class="stat-item"><span>Total recorded profit</span><b class="profit">'+money(prof)+'</b></div><div class="stat-item"><span>Overall profit margin</span><b>'+margin.toFixed(1)+'%</b></div><div class="stat-item"><span>Top revenue product</span><b>'+esc(best?.[0]||'—')+'</b></div>';
+}
+async function assistantSend(){const input=$('assistantInput'),txt=input.value.trim();if(!txt)return;addBubble('user',txt);input.value='';try{const r=await fetch('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt})});const d=await r.json();addBubble('bot',(d.message||'Could not save.')+(d.sales?'\n'+d.sales.map(x=>x.product+': '+x.quantity+' × '+money(x.unit_price)+' = '+money(x.total)).join('\n'):''));if(r.ok){await loadData();toast('Sale data saved successfully')}}catch(e){addBubble('bot','I could not connect to the sales database. Please try again.')}}function addBubble(type,text){const div=document.createElement('div');div.className='bubble '+type;div.innerHTML=esc(text).replace(/\n/g,'<br>');$('messages').appendChild(div);$('messages').scrollTop=$('messages').scrollHeight}
+async function saveManual(){const p={product:$('addProduct').value.trim(),quantity:$('addQty').value,unit_price:$('addPrice').value,type:$('addType').value,date:$('addDate').value};if(!p.product||!p.quantity||p.unit_price===''){toast('Product, quantity and price are required');return}const r=await fetch('/api/sales/manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}),d=await r.json();if(r.ok){toast('Sale saved successfully');clearManual();await loadData()}else toast(d.message||'Could not save sale')}
+function clearManual(){$('addProduct').value='';$('addQty').value='';$('addPrice').value='';$('addDate').value=new Date().toISOString().slice(0,10)}
+async function resetData(){if(confirm('Delete all saved sales data? This cannot be undone.')){await fetch('/api/reset',{method:'POST'});toast('Sales records reset');await loadData()}}
+$('todayLabel').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});$('addDate').value=new Date().toISOString().slice(0,10);
+</script>
+</body></html>
