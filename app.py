@@ -170,10 +170,10 @@ def assistant_reply(message):
         return {"name":p["name"],**dict(r)}
 
     if re.search(r"\b(hi|hii|hello|hey|hai|vanakkam|good morning|good afternoon|good evening)\b",low):
-        return "Hi 😊 Nice to see you! I'm your SALES FLOW assistant. Ask me about your real sales, revenue, profit, products, or business performance."
+        return "Hi 😊 I’m Flowi, your SALES FLOW AI companion. Ask me about your real sales, revenue, profit, products, stock, or business performance."
 
     if re.search(r"\b(thank you|thanks|thank|super|great)\b",low):
-        return "You're welcome 😊 I'm here whenever you want to check your real sales data."
+        return "You’re welcome 😊 Flowi is here whenever you want to check your real sales data."
 
     is_today=bool(re.search(r"\b(today|todays|today's|innaiku|indru)\b",low))
     is_week=bool(re.search(r"\b(this week|weekly|week|intha week|indha week)\b",low))
@@ -226,7 +226,7 @@ def assistant_reply(message):
         if not parts: parts=[f"{r['orders']} sales records",f"{r['items']} items sold",f"₹{r['revenue']:,.2f} revenue",f"₹{r['profit']:,.2f} profit"]
         return f"Here’s the real picture for {period}: "+", ".join(parts)+"."
 
-    return "I can help 😊 Try: “What is today's profit?”, “How many coffee were sold?”, “What is my revenue this month?”, “Which product sells the most?”, or “What is my profit margin?”"
+    return "I’m Flowi 😊 Try: “What is today’s profit?”, “How many coffee were sold?”, “What is my revenue this month?”, “Which product sells the most?”, “Show low stock items”, or “What is my profit margin?”"
 
 
 @app.post("/api/assistant")
@@ -235,7 +235,7 @@ def assistant():
     message = payload.get("message", "")
     if not message.strip():
         return jsonify(ok=False, message="Please type a message."), 400
-    return jsonify(ok=True, message=assistant_reply(message))
+    return jsonify(ok=True, assistant="Flowi", source="SALES FLOW database", message=assistant_reply(message))
 
 @app.post("/api/sales")
 def create_sales():
