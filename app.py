@@ -268,7 +268,13 @@ def manual_sale():
     d={"product":prod,"quantity":qty,"selling_price":unit,"cost_price":float(prod["cost_price"]),"cost_known":known,
        "revenue":qty*unit,"profit":(unit-float(prod["cost_price"]))*qty if known else 0}
     stamp=add_sales([d],p.get("type","Sale"),p.get("date"))
-    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date=stamp)
+    conn=get_db()
+    saved=conn.execute("""SELECT s.id,s.sold_at,s.sale_type,p.name product,s.quantity,
+        s.selling_price,s.cost_price,s.revenue,s.profit,s.cost_known
+        FROM sales s JOIN products p ON p.id=s.product_id
+        WHERE s.sold_at=? AND s.product_id=? ORDER BY s.id DESC LIMIT 1""",(stamp,prod["id"])).fetchone()
+    conn.close()
+    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date=stamp,stored=True,record=dict(saved))
 
 @app.put("/api/products/<int:product_id>")
 def update_product(product_id):
