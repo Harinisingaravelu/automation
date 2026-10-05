@@ -101,15 +101,18 @@ def parse_items(text):
 
 def add_sales(items,sale_type="Sale",sale_date=None):
     conn=get_db()
-    stamp=(sale_date or datetime.now().strftime("%Y-%m-%d")) + " " + datetime.now().strftime("%H:%M:%S")
+    # Every submitted item becomes its own permanent sales-record row.
+    stamp=(sale_date or datetime.now().strftime("%Y-%m-%d")) + " " + datetime.now().strftime("%H:%M:%S.%f")
+    inserted_ids=[]
     for d in items:
         p=d["product"]
-        conn.execute("""INSERT INTO sales
+        cur=conn.execute("""INSERT INTO sales
         (sold_at,sale_type,product_id,quantity,selling_price,cost_price,revenue,profit,cost_known)
         VALUES(?,?,?,?,?,?,?,?,?)""",(stamp,sale_type,p["id"],d["quantity"],d["selling_price"],d["cost_price"],d["revenue"],d["profit"],d.get("cost_known",1)))
+        inserted_ids.append(cur.lastrowid)
         conn.execute("UPDATE products SET stock=MAX(stock-?,0) WHERE id=?",(d["quantity"],p["id"]))
     conn.commit(); conn.close()
-    return stamp
+    return stamp, inserted_ids
 
 def summary(period="today"):
     conn=get_db()
@@ -242,11 +245,11 @@ def create_sales():
     payload=request.get_json(silent=True) or {}
     items,err=parse_items(payload.get("message",""))
     if err: return jsonify(ok=False,message=err),400
-    stamp=add_sales(items,payload.get("type","Sale"),payload.get("date"))
+    stamp, inserted_ids=add_sales(items,payload.get("type","Sale"),payload.get("date"))
     saved=[{"date":stamp,"type":payload.get("type","Sale"),"product":d["product"]["name"],
             "quantity":d["quantity"],"unit_price":round(d["selling_price"],2),
             "total":round(d["revenue"],2),"profit":round(d["profit"],2),"cost_known":d.get("cost_known",1)} for d in items]
-    return jsonify(ok=True,message="Saved "+", ".join(f'{d["quantity"]} × {d["product"]["name"]}' for d in items),sales=saved,summary=summary("today"))
+    return jsonify(ok=True,message="Saved "+", ".join(f'{d["quantity"]} × {d["product"]["name"]}' for d in items),sales=saved,record_ids=inserted_ids,stored_count=len(inserted_ids),summary=summary("today"))
 
 @app.post("/api/sales/manual")
 def manual_sale():
@@ -267,14 +270,14 @@ def manual_sale():
     known=int(prod["cost_known"])==1
     d={"product":prod,"quantity":qty,"selling_price":unit,"cost_price":float(prod["cost_price"]),"cost_known":known,
        "revenue":qty*unit,"profit":(unit-float(prod["cost_price"]))*qty if known else 0}
-    stamp=add_sales([d],p.get("type","Sale"),p.get("date"))
+    stamp, inserted_ids=add_sales([d],p.get("type","Sale"),p.get("date"))
     conn=get_db()
     saved=conn.execute("""SELECT s.id,s.sold_at,s.sale_type,p.name product,s.quantity,
         s.selling_price,s.cost_price,s.revenue,s.profit,s.cost_known
         FROM sales s JOIN products p ON p.id=s.product_id
-        WHERE s.sold_at=? AND s.product_id=? ORDER BY s.id DESC LIMIT 1""",(stamp,prod["id"])).fetchone()
+        WHERE s.id=?""",(inserted_ids[0],)).fetchone()
     conn.close()
-    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date=stamp,stored=True,record=dict(saved))
+    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date=stamp,stored=True,record=dict(saved),record_ids=inserted_ids)
 
 @app.put("/api/products/<int:product_id>")
 def update_product(product_id):
@@ -319,7 +322,7 @@ def sales():
     conn=get_db()
     rows=conn.execute("""SELECT s.id,s.sold_at,s.sale_type,p.name product,s.quantity,
     s.selling_price,s.cost_price,s.revenue,s.profit,s.cost_known
-    FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC LIMIT 500""").fetchall()
+    FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC""").fetchall()
     conn.close(); return jsonify([dict(r) for r in rows])
 
 @app.get("/api/chart")
