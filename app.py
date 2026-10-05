@@ -140,7 +140,7 @@ def manual_sale():
     d={"product":prod,"quantity":qty,"selling_price":unit,"cost_price":float(prod["cost_price"]),
        "revenue":qty*unit,"profit":(unit-float(prod["cost_price"]))*qty}
     stamp=add_sales([d],p.get("type","Sale"),p.get("date"))
-    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date:stamp)
+    return jsonify(ok=True,message=f"Saved {qty} × {prod['name']}",date=stamp)
 
 @app.get("/api/summary")
 def api_summary(): return jsonify({p:summary(p) for p in ["today","week","month","all"]})
