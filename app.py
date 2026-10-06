@@ -181,6 +181,9 @@ def no_cache(r):
 def health():return jsonify(ok=True,database="sqlite",sales_records=row("SELECT COUNT(*) count FROM sales")["count"])
 @app.get("/api/dashboard")
 def api_dashboard():return jsonify(dashboard(request.args.get("period","30d"),request.args.get("start"),request.args.get("end")))
+@app.get("/api/insights")
+def api_insights():
+    return jsonify(analytics("30d"))
 @app.get("/api/analytics")
 def api_analytics():return jsonify(analytics(request.args.get("period","30d"),request.args.get("start"),request.args.get("end")))
 @app.get("/api/products")
