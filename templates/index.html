@@ -113,53 +113,108 @@
   </main></div>
 <div id="toast" class="toast"></div>
 <script>
-const state={sales:[],products:[]};
+const state={sales:[],products:[],range:7,charts:{},insights:null};
 const $=id=>document.getElementById(id);
 const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-function toast(msg){const t=$('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300)}
-function toggleSide(){$('sidebar')?.classList.toggle('open')}
-function quickAsk(q){const i=$('assistantInput');if(!i)return;i.value=q;window.assistantSend?.()}
-function setFlowiState(status){
-  const live=document.querySelector('.flowi-live');
-  if(live)live.innerHTML=status==='processing'?'<i></i> PROCESSING':status==='warning'?'<i></i> CHECK REQUIRED':'<i></i> ONLINE';
-  const orbit=document.querySelector('.flowi-orbit');if(orbit)orbit.dataset.state=status;
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2300)}
+function enterApp(){$('landing').style.display='none';$('app').style.display='block';document.body.classList.add('app-open');$('mainScrollFix')?.remove();$('app').querySelector('.main')?.scrollTo(0,0);loadData();showView('dashboard')}
+function toggleSide(){$('sidebar').classList.toggle('open')}
+function showView(name){
+  const mainScroller=document.querySelector('.main');
+  if(mainScroller)mainScroller.scrollTo({top:0,left:0,behavior:'auto'});
+  document.querySelectorAll('section.view').forEach(v=>v.classList.remove('active'));
+  const target=$('view-'+name);
+  if(!target){console.error('SALES FLOW: view not found',name);return}
+  target.classList.add('active');
+  target.style.setProperty('display','block','important');
+  target.style.setProperty('visibility','visible','important');
+  target.style.setProperty('opacity','1','important');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
+  const titles={dashboard:['Good afternoon 👋',"Here's your business performance overview."],assistant:['Flowi — AI Sales Assistant','Ask Flowi about sales, revenue, profit and business insights.'],add:['Add Sale','Record a new transaction with complete details.'],records:['Sales Records','Review every stored sales transaction.'],products:['Products','Understand your product catalogue and performance.'],analytics:['Analytics','Explore trends and business performance.'],reports:['Reports','Turn your sales data into useful business reports.'],export:['Export Center','Download your business data for further analysis.'],settings:['Settings','Manage your SALES FLOW workspace.']};
+  $('pageTitle').textContent=titles[name][0];$('pageDesc').textContent=titles[name][1];if(innerWidth<761)$('sidebar').classList.remove('open');
+  if(name==='analytics')renderAnalytics();if(name==='products')renderProducts();if(name==='records')loadData();
 }
-async function updateFlowiContext(){
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+function useExample(x){$('assistantInput').value=x;$('assistantInput').focus()}
+async function loadData(){
   try{
-    const [sales,products]=await Promise.all([
-      fetch('/api/sales',{cache:'no-store'}).then(r=>r.json()),
-      fetch('/api/products',{cache:'no-store'}).then(r=>r.json())
-    ]);
-    state.sales=Array.isArray(sales)?sales:[];state.products=Array.isArray(products)?products:[];
-    const today=new Date();const key=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-    const rows=state.sales.filter(x=>String(x.sold_at||'').slice(0,10)===key);
-    const revenue=rows.reduce((a,x)=>a+Number(x.revenue||0),0);
-    const known=rows.filter(x=>Number(x.cost_known)!==0);
-    const profit=known.reduce((a,x)=>a+Number(x.profit||0),0);
-    const items=rows.reduce((a,x)=>a+Number(x.quantity||0),0);
-    const counts={};rows.forEach(x=>counts[x.product]=(counts[x.product]||0)+Number(x.quantity||0));
-    const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
-    const low=state.products.filter(p=>Number(p.stock||0)>0&&Number(p.stock||0)<=Number(p.low_stock_threshold||10)).sort((a,b)=>Number(a.stock)-Number(b.stock))[0];
-    if($('ctxRevenue'))$('ctxRevenue').textContent=money(revenue);
-    if($('ctxProfit'))$('ctxProfit').textContent=known.length?money(profit):'₹0';
-    if($('ctxOrders'))$('ctxOrders').textContent=rows.length;
-    if($('ctxItems'))$('ctxItems').textContent=items;
-    if($('ctxTopProduct'))$('ctxTopProduct').textContent=top?top[0]:'—';
-    if($('ctxTopProductMeta'))$('ctxTopProductMeta').textContent=top?top[1]+' units sold today':'No sales recorded today';
-    if($('ctxLowStock'))$('ctxLowStock').textContent=low?low.name+' · '+low.stock+' left':'All clear';
-    if($('ctxInsight'))$('ctxInsight').textContent=top?top[0]+' is leading today with '+top[1]+' units sold.':'Add a sale and I\'ll start finding patterns for you.';
-  }catch(e){console.warn('FLOWI context update failed',e)}
-}
-function addBubble(type,text){
-  const box=$('messages');if(!box)return;
-  const row=document.createElement('div');row.className='flowi-message '+type;
-  if(type==='user'){
-    row.innerHTML='<div><div class="msg-card user-card">'+esc(text).replace(/\n/g,'<br>')+'</div></div>';
-  }else{
-    row.innerHTML='<div class="msg-avatar">F</div><div><div class="msg-card">'+esc(text).replace(/\n/g,'<br>')+'</div><span class="msg-source">SALES FLOW intelligence</span></div>';
+    const getJson=async url=>{const r=await fetch(url,{cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.message||url+' failed');return d};
+    const [s,p,i]=await Promise.all([getJson('/api/sales'),getJson('/api/products'),getJson('/api/insights')]);
+    if(!Array.isArray(s)||!Array.isArray(p))throw new Error('Invalid database response');
+    state.sales=s;state.products=p;state.insights=i;renderAll();
+  }catch(e){
+    console.error('SALES FLOW load error:',e);
+    toast('Could not load saved sales data. Please refresh.');
   }
-  box.appendChild(row);box.scrollTop=box.scrollHeight;
 }
+function renderAll(){
+  [['dashboard',renderDashboard],['records',renderRecords],['products',renderProducts],['analytics',renderAnalytics],['reports',renderReports],['export',renderExport]].forEach(([name,fn])=>{try{fn()}catch(e){console.error('SALES FLOW '+name+' render error:',e);}});
+}
+function periodTotals(days){const now=new Date();const start=new Date(now);start.setHours(0,0,0,0);start.setDate(start.getDate()-(days-1));return state.sales.filter(x=>new Date(x.sold_at.replace(' ','T'))>=start).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
+function previousTotals(days){const now=new Date();const end=new Date(now);end.setHours(0,0,0,0);end.setDate(end.getDate()-days);const start=new Date(end);start.setDate(start.getDate()-days);return state.sales.filter(x=>{const d=new Date(x.sold_at.replace(' ','T'));return d>=start&&d<end}).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
+function pct(a,b){if(!b)return null;return ((a-b)/b*100)}
+function changeText(id,current,previous){const p=pct(current,previous);$(id).className='change '+(p===null?'neutral':p>=0?'positive':'negative');$(id).textContent=p===null?'No previous period data':(p>=0?'↑ ':'↓ ')+Math.abs(p).toFixed(1)+'% vs previous period'}
+function localDateKey(d=new Date()){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function saleDateKey(value){
+  const s=String(value||'');
+  return s.length>=10?s.slice(0,10):'';
+}
+function updateFlowiContext(){
+  const today=localDateKey();
+  const a=state.sales.filter(x=>saleDateKey(x.sold_at)===today);
+  const revenue=a.reduce((s,x)=>s+Number(x.revenue||0),0);
+  const known=a.filter(x=>Number(x.cost_known)!==0);
+  const profit=known.reduce((s,x)=>s+Number(x.profit||0),0);
+  const pending=a.length-known.length;
+  const items=a.reduce((s,x)=>s+Number(x.quantity||0),0);
+  if($('ctxRevenue'))$('ctxRevenue').textContent=money(revenue);
+  if($('ctxProfit'))$('ctxProfit').textContent=known.length?money(profit):'Pending';
+  if($('ctxOrders'))$('ctxOrders').textContent=a.length;
+  if($('ctxItems'))$('ctxItems').textContent=items;
+  const counts={};
+  a.forEach(x=>counts[x.product]=(counts[x.product]||0)+Number(x.quantity||0));
+  const top=Object.entries(counts).sort((x,y)=>y[1]-x[1])[0];
+  if($('ctxTopProduct'))$('ctxTopProduct').textContent=top?top[0]:'—';
+  if($('ctxTopProductMeta'))$('ctxTopProductMeta').textContent=top?top[1]+' units sold today':'No sales recorded today';
+  const low=state.products.filter(p=>Number(p.stock||0)>0&&Number(p.stock||0)<=10).sort((x,y)=>Number(x.stock)-Number(y.stock))[0];
+  if($('ctxLowStock'))$('ctxLowStock').textContent=low?low.name+' · '+low.stock+' left':'No low-stock item';
+  if($('ctxInsight'))$('ctxInsight').textContent=top
+    ? top[0]+' is leading today with '+top[1]+' units sold.'
+    : (pending?'Some profit values are waiting for cost data.':'No sales recorded today yet.');
+}
+async function assistantSend(){
+  const input=$('assistantInput'),txt=input.value.trim();
+  if(!txt)return;
+  addBubble('user',txt);
+  input.value='';
+  addTyping();
+  setFlowiState('processing');
+  try{
+    const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt}),cache:'no-store'});
+    const d=await r.json();
+    removeTyping();
+    if(!r.ok){addBubble('bot',d.message||'I could not process that request.');setFlowiState('warning');return}
+    addBubble('bot',d.message||'I could not find that information in the saved database.');
+    setFlowiState(d.warning?'warning':'success');
+    updateFlowiContext();
+  }catch(e){
+    removeTyping();
+    addBubble('bot','I’m having trouble reaching the SALES FLOW database right now. Please try again.');
+    setFlowiState('warning');
+  }
+}
+function setFlowiState(state){
+  const stage=document.querySelector('.flowi-orbit');
+  const status=document.querySelector('.flowi-live');
+  if(stage)stage.dataset.state=state;
+  if(status)status.innerHTML=state==='processing'?'<i></i> PROCESSING':state==='warning'?'<i></i> CHECK REQUIRED':'<i></i> ONLINE';
+}
+function quickAsk(q){$('assistantInput').value=q;assistantSend()}
+function addBubble(type,text){const row=document.createElement('div');row.className='bubble-row '+type;const avatar=type==='bot'?'<div class="bubble-avatar">F</div>':'';const proof=type==='bot'?'<div class="data-proof">✓ <b>Flowi checked:</b> SALES FLOW database</div>':'';row.innerHTML=avatar+'<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+proof+'</div>';if(type==='user'){row.innerHTML='<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+'</div><div class="bubble-avatar">H</div>'}$('messages').appendChild(row);$('messages').scrollTop=$('messages').scrollHeight}
+setFlowiState('success');
 </script>
 </body></html>
