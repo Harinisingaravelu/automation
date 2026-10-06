@@ -65,71 +65,53 @@
   </div>
 
   <section id="view-dashboard" class="view active">
-    <div class="kpis">
-      <div class="kpi"><div class="kpi-icon">₹</div><div class="kpi-label">Total Revenue</div><div class="kpi-value" id="kpiRevenue">₹0</div><div class="change" id="revChange">No previous period data</div></div>
-      <div class="kpi green"><div class="kpi-icon">↗</div><div class="kpi-label">Total Profit</div><div class="kpi-value" id="kpiProfit">₹0</div><div class="change" id="profitChange">No previous period data</div></div>
-      <div class="kpi orange"><div class="kpi-icon">▤</div><div class="kpi-label">Total Orders</div><div class="kpi-value" id="kpiOrders">0</div><div class="change neutral">Sales records stored</div></div>
-      <div class="kpi"><div class="kpi-icon">□</div><div class="kpi-label">Items Sold</div><div class="kpi-value" id="kpiItems">0</div><div class="change neutral">Units sold</div></div>
-    </div>
-    <div class="insight-strip">
-      <div class="insight-mini"><small>Average Order Value</small><strong id="insightAov">₹0</strong></div>
-      <div class="insight-mini"><small>Overall Margin</small><strong id="insightMargin">0%</strong></div>
-      <div class="insight-mini"><small>Best Sales Day</small><strong id="insightBestDay">—</strong></div>
-      <div class="insight-mini"><small>Low Stock Items</small><strong id="insightLowStock">0</strong></div>
-    </div>
-    <div id="lowStockAlert" class="low-stock"></div>
+    <div class="page-head"><div><h1>Dashboard</h1><p>See your sales performance at a glance.</p></div></div>
     <div class="two-col">
-      <div class="panel"><div class="panel-title"><div><h2>Revenue & Profit Overview</h2><p>Performance from your real sales records</p></div><div class="filter-row"><button class="filter active" onclick="setRange(7,this)">7 Days</button><button class="filter" onclick="setRange(30,this)">30 Days</button><button class="filter" onclick="setRange(90,this)">90 Days</button></div></div><div class="chart-box"><canvas id="overviewChart"></canvas></div></div>
-      <div class="panel"><div class="panel-title"><div><h2>Top Selling Products</h2><p>Ranked by units sold</p></div></div><div id="topProducts" class="products-grid"></div></div>
+      <div class="panel"><div class="panel-title"><div><h2>Sales Analytics</h2><p>Revenue and profit trend from your saved sales.</p></div></div><div class="chart-box"><canvas id="overviewChart"></canvas></div></div>
+      <div class="panel"><div class="panel-title"><div><h2>Today’s Profit & Loss</h2><p>Only today’s saved transactions.</p></div></div>
+        <div class="kpis" style="grid-template-columns:1fr 1fr">
+          <div class="kpi green"><div class="kpi-label">Today Profit</div><div class="kpi-value" id="todayProfit">₹0</div></div>
+          <div class="kpi orange"><div class="kpi-label">Today Loss</div><div class="kpi-value" id="todayLoss">₹0</div></div>
+        </div>
+        <div class="stat-list" style="margin-top:16px">
+          <div class="stat-item"><span>Today Net Sales</span><b id="todaySales">₹0</b></div>
+          <div class="stat-item"><span>Today Transactions</span><b id="todayOrders">0</b></div>
+        </div>
+      </div>
     </div>
-    <div class="panel" style="margin-top:18px"><div class="panel-title"><div><h2>Recent Sales</h2><p>Your latest sales activity</p></div><button class="btn secondary" onclick="showView('records')">View All Sales →</button></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Selling Price</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Status</th></tr></thead><tbody id="recentRows"></tbody></table></div></div>
   </section>
 
   <section id="view-assistant" class="view">
     <div class="flowi-shell">
       <div class="flowi-copy">
-        <div class="flowi-kicker">✦ FLOWI AI SALES COMPANION <span class="flowi-status"><i></i> LIVE</span></div>
+        <div class="flowi-kicker">✦ FLOWI AI ASSISTANT <span class="flowi-status"><i></i> LIVE</span></div>
         <h2 class="flowi-title">Hi! I’m <span>Flowi</span> ✨</h2>
-        <p class="flowi-sub">Your friendly AI sales companion. I can save sales, explain revenue, cost, profit, products, trends and business insights using the <b>real SALES FLOW database</b>.</p>
-        <div class="flowi-tools"><span class="flowi-tool">💬 Sales Entry</span><span class="flowi-tool">✓ Real Data Answers</span><span class="flowi-tool">📊 Analytics</span><span class="flowi-tool">📄 Reports</span></div>
+        <p class="flowi-sub">Your AI assistant for answering questions and helping you understand your SALES FLOW data.</p>
       </div>
-      <div class="flowi-stage" aria-label="Flowi 3D AI character">
+      <div class="flowi-stage" aria-label="Flowi AI character">
         <div class="flowi-glow"></div><div class="flowi-3d"><div class="flowi-halo"></div><div class="flowi-head"><span class="flowi-eye left"></span><span class="flowi-eye right"></span><span class="flowi-mouth"></span></div><span class="flowi-spark">✦</span><div class="flowi-body"></div><div class="flowi-arm left"></div><div class="flowi-arm right"></div><div class="flowi-name">FLOWI • AI</div></div>
       </div>
     </div>
     <div class="chat-shell" style="margin-top:16px">
       <div class="chat-card">
-        <div class="chat-head"><div class="bot-avatar">F</div><div><strong>Flowi</strong><div style="font-size:11px;color:#64748b">AI Sales Assistant · Real database connected</div></div><span style="margin-left:auto;color:#16a34a;font-size:11px;font-weight:800">● Online</span></div>
+        <div class="chat-head"><div class="bot-avatar">F</div><div><strong>Flowi</strong><div style="font-size:11px;color:#64748b">AI Assistant</div></div><span style="margin-left:auto;color:#16a34a;font-size:11px;font-weight:800">● Online</span></div>
         <div id="messages" class="chat-messages">
-          <div class="bubble-row"><div class="bubble-avatar">F</div><div class="bubble bot">Hello Harini! 😊 I’m Flowi. Ask me anything about your sales.<div class="data-proof">✓ <b>Verified source:</b> SALES FLOW saved records</div></div></div>
+          <div class="bubble-row"><div class="bubble-avatar">F</div><div class="bubble bot">Hello Harini! 😊 I’m Flowi. How can I help you?</div></div>
         </div>
         <div class="assistant-chips">
-          <button class="chip" onclick="quickAsk('What is today\'s profit?')">💚 Today’s Profit</button>
-          <button class="chip" onclick="quickAsk('What is today\'s revenue?')">💙 Today’s Revenue</button>
-          <button class="chip" onclick="quickAsk('Which product sells the most?')">🏆 Top Product</button>
-          <button class="chip" onclick="quickAsk('What is my profit margin?')">💜 Profit Margin</button>
+          <button class="chip" onclick="quickAsk('What is today’s profit?')">Today’s Profit</button>
+          <button class="chip" onclick="quickAsk('What is today’s revenue?')">Today’s Revenue</button>
+          <button class="chip" onclick="quickAsk('Which product sells the most?')">Top Product</button>
+          <button class="chip" onclick="quickAsk('What is my profit margin?')">Profit Margin</button>
         </div>
-        <div class="composer"><input id="assistantInput" placeholder="Ask Flowi anything or enter a sale..." onkeydown="if(event.key==='Enter')assistantSend()"><button class="btn" onclick="assistantSend()">Send →</button></div>
+        <div class="composer"><input id="assistantInput" placeholder="Ask Flowi a question..." onkeydown="if(event.key==='Enter')assistantSend()"><button class="btn" onclick="assistantSend()">Send →</button></div>
       </div>
-      <aside class="hint-card">
-        <div class="flowi-side-card"><strong>✨ Flowi knows your business</strong><p>Flowi answers from saved SALES FLOW records. It does not invent business numbers.</p><span class="flowi-side-pill">✓ REAL DATABASE</span></div>
-        <div class="quick-title">Quick Questions</div>
-        <div class="quick-question" onclick="quickAsk('What is today\'s profit?')"><span class="quick-icon">₹</span>Today’s Profit</div>
-        <div class="quick-question" onclick="quickAsk('What is today\'s revenue?')"><span class="quick-icon">📈</span>Today’s Revenue</div>
-        <div class="quick-question" onclick="quickAsk('Which product sells the most?')"><span class="quick-icon">🏆</span>Top Product</div>
-        <div class="quick-question" onclick="quickAsk('What is my profit margin?')"><span class="quick-icon">%</span>Profit Margin</div>
-        <div class="quick-question" onclick="quickAsk('What is my revenue this month?')"><span class="quick-icon">📅</span>This Month</div>
-        <div class="quick-title">Example Sales</div>
-        <div class="example" onclick="useExample('2 coffee, 3 tea')">☕ 2 coffee, 3 tea</div>
-        <div class="example" onclick="useExample('I sold 5 coffee')">☕ I sold 5 coffee</div>
-        <div class="example" onclick="useExample('2 coffee at ₹50, 3 tea at ₹20')">🧾 2 coffee at ₹50, 3 tea at ₹20</div>
-      </aside>
     </div>
   </section>
 
-  <section id="view-add" class="view"><div class="panel" style="max-width:850px"><div class="panel-title"><div><h2>Add Sale</h2><p>Record complete transaction data so profit stays accurate.</p></div></div><div class="form-grid"><div class="field"><label>Item / Product</label><input id="addProduct" class="input" placeholder="e.g. Coffee"></div><div class="field"><label>Quantity</label><input id="addQty" class="input" type="number" min="1" placeholder="2"></div><div class="field"><label>Sale Type</label><select id="addType"><option>Sale</option><option>Wholesale</option><option>Retail</option><option>Online</option><option>Other</option></select></div><div class="field"><label>Rate / Selling Price per Unit (₹)</label><input id="addPrice" class="input" type="number" min="0" step=".01" placeholder="50"></div><div class="field"><label>Discount (₹)</label><input id="addDiscount" class="input" type="number" min="0" step=".01" placeholder="0"></div><div class="field"><label>Cost Price per Unit (₹)</label><input id="addCost" class="input" type="number" min="0" step=".01" placeholder="30"></div><div class="field"><label>Date</label><input id="addDate" class="input" type="date"></div></div><div class="form-actions"><button class="btn" onclick="saveManual()">Save Sale</button><button class="btn secondary" onclick="clearManual()">Clear</button></div><div class="save-note">✓ Each time you click <b>Save Sale</b>, a new transaction record is added. Previous sales are not overwritten.</div></div></div></section>
+  <section id="view-add" class="view"><div class="panel" style="max-width:850px"><div class="panel-title"><div><h2>Add Sale</h2><p>Add one complete sales transaction.</p></div></div><div class="form-grid"><div class="field"><label>Item / Product</label><input id="addProduct" class="input" placeholder="e.g. Coffee"></div><div class="field"><label>Quantity</label><input id="addQty" class="input" type="number" min="1" placeholder="2"></div><div class="field"><label>Sale Type</label><select id="addType"><option>Sale</option><option>Wholesale</option><option>Retail</option><option>Online</option><option>Other</option></select></div><div class="field"><label>Rate / Selling Price per Unit (₹)</label><input id="addPrice" class="input" type="number" min="0" step=".01" placeholder="50"></div><div class="field"><label>Discount (₹)</label><input id="addDiscount" class="input" type="number" min="0" step=".01" placeholder="0"></div><div class="field"><label>Cost Price per Unit (₹)</label><input id="addCost" class="input" type="number" min="0" step=".01" placeholder="30"></div><div class="field"><label>Date</label><input id="addDate" class="input" type="date"></div></div><div class="form-actions"><button class="btn" onclick="saveManual()">Save Sale</button><button class="btn secondary" onclick="clearManual()">Clear</button></div></div></section>
 
-  <section id="view-records" class="view"><div class="panel"><div class="panel-title"><div><h2>Sales Records <span id="recordCount" class="record-count">0 records</span></h2><p>Every Add Sale transaction is stored as a separate record with item, quantity, rate, discount, net sales, cost and profit.</p></div><a class="btn" href="/api/export">Export CSV</a></div><div class="search-bar"><input id="recordSearch" class="input" placeholder="Search item or sale type..." oninput="renderRecords()"><select id="recordType" class="input" style="max-width:180px" onchange="renderRecords()"><option value="">All Types</option><option>Sale</option><option>Wholesale</option><option>Retail</option><option>Online</option><option>Other</option></select></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Qty</th><th>Rate</th><th>Discount</th><th>Net Sales</th><th>Cost</th><th>Profit</th><th>Margin</th><th>Status</th></tr></thead><tbody id="allRows"></tbody></table></div></div></section>
+  <section id="view-records" class="view"><div class="panel"><div class="panel-title"><div><h2>Sales Records <span id="recordCount" class="record-count">0 records</span><<section id="view-records" class="view"><div class="panel"><div class="panel-title"><div><h2>Recent Sales</h2><p>Latest transactions added from the Add Sale page.</p></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Qty</th><th>Rate</th><th>Discount</th><th>Net Sales</th><th>Cost</th><th>Profit</th><th>Margin</th><th>Status</th></tr></thead><tbody id="allRows"></tbody></table></div></div></section>
 
   <section id="view-products" class="view"><div class="panel"><div class="panel-title"><div><h2>Products</h2><p>Products are created automatically when you record a new item.</p></div></div><div id="productCards" class="products-grid"></div></div></section>
 
@@ -196,12 +178,13 @@ function previousTotals(days){const now=new Date();const end=new Date(now);end.s
 function pct(a,b){if(!b)return null;return ((a-b)/b*100)}
 function changeText(id,current,previous){const p=pct(current,previous);$(id).className='change '+(p===null?'neutral':p>=0?'positive':'negative');$(id).textContent=p===null?'No previous period data':(p>=0?'↑ ':'↓ ')+Math.abs(p).toFixed(1)+'% vs previous period'}
 function renderDashboard(){
- const t=periodTotals(state.range),p=previousTotals(state.range);
- if(state.insights){$('insightAov').textContent=money(state.insights.average_order_value);$('insightMargin').textContent=Number(state.insights.margin||0).toFixed(1)+'%';$('insightBestDay').textContent=state.insights.best_day?.day||'—';$('insightLowStock').textContent=state.insights.low_stock?.length||0;const low=state.insights.low_stock||[];$('lowStockAlert').style.display=low.length?'block':'none';$('lowStockAlert').innerHTML=low.length?'⚠ Low stock: '+low.map(x=>esc(x.name)+' ('+x.stock+')').join(' · '):'';}$('kpiRevenue').textContent=money(t.revenue);$('kpiProfit').textContent=money(t.profit);$('kpiOrders').textContent=t.orders;$('kpiItems').textContent=t.items;changeText('revChange',t.revenue,p.revenue);changeText('profitChange',t.profit,p.profit);
- const groups={};state.sales.forEach(x=>{const n=x.product;groups[n]??={qty:0,revenue:0,profit:0};groups[n].qty+=+x.quantity;groups[n].revenue+=+x.revenue;groups[n].profit+=+x.profit});
- const top=Object.entries(groups).sort((a,b)=>b[1].qty-a[1].qty).slice(0,6),max=top[0]?.[1].qty||1;
- $('topProducts').innerHTML=top.length?top.map(([n,v])=>'<div class="product-row"><div class="product-top"><span class="product-name">'+esc(n)+'</span><b>'+v.qty+' units</b></div><div class="product-meta">'+money(v.revenue)+' revenue · '+money(v.profit)+' profit</div><div class="bar"><span style="width:'+Math.max(5,v.qty/max*100)+'%"></span></div></div>').join(''):'<div class="empty">No sales yet. Add your first sale.</div>';
- $('recentRows').innerHTML=state.sales.slice(0,8).map(rowHtml).join('')||'<tr><td colspan="11" class="empty">No sales records yet.</td></tr>';drawOverview();
+ const today=new Date().toISOString().slice(0,10);
+ const todays=state.sales.filter(x=>String(x.sold_at||'').slice(0,10)===today);
+ const profit=todays.reduce((s,x)=>s+Math.max(0,Number(x.profit||0)),0);
+ const loss=todays.reduce((s,x)=>s+Math.max(0,-Number(x.profit||0)),0);
+ const sales=todays.reduce((s,x)=>s+Number(x.revenue||0),0);
+ $('todayProfit').textContent=money(profit);$('todayLoss').textContent=money(loss);$('todaySales').textContent=money(sales);$('todayOrders').textContent=todays.length;
+ drawOverview();
 }
 function rowHtml(x){
  const margin=Number(x.revenue)>0&&x.cost_known?((Number(x.profit)/Number(x.revenue))*100):0;
@@ -216,7 +199,10 @@ function drawOverview(){
   state.charts.overview=new Chart(ctx,{type:'line',data:{labels:dates,datasets:[{label:'Revenue',data:rev,borderColor:'#2563eb',backgroundColor:'#2563eb15',fill:true,tension:.35},{label:'Profit',data:profit,borderColor:'#16a34a',backgroundColor:'#16a34a12',fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#edf0f4'}},x:{grid:{display:false}}}}});
 }
 function setRange(n,el){state.range=n;document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderDashboard()}
-function renderRecords(){if($('recordCount'))$('recordCount').textContent=state.sales.length+' record'+(state.sales.length===1?'':'s');const q=($('recordSearch')?.value||'').toLowerCase().trim(),type=$('recordType')?.value||'';const rows=state.sales.filter(x=>(!q||String(x.product||'').toLowerCase().includes(q)||String(x.sale_type||'').toLowerCase().includes(q))&&(!type||x.sale_type===type));$('allRows').innerHTML=rows.map(x=>rowHtml(x).replace('<th>','')).join('')||'<tr><td colspan="11" class="empty">No matching sales records.</td></tr>'}
+function renderRecords(){
+ const rows=state.sales.slice(0,10);
+ $('allRows').innerHTML=rows.map(rowHtml).join('')||'<tr><td colspan="11" class="empty">No sales added yet. Add your first sale.</td></tr>';
+}
 function renderProducts(){
  const groups={};state.sales.forEach(x=>{const name=String(x.product||'Unknown');groups[name]??={qty:0,revenue:0,profit:0};groups[name].qty+=Number(x.quantity||0);groups[name].revenue+=Number(x.revenue||0);groups[name].profit+=Number(x.profit||0)});
  const names=[...new Set([...state.products.map(x=>x.name),...Object.keys(groups)])].sort();$('productCards').innerHTML=names.map(n=>{const g=groups[n]||{qty:0,revenue:0,profit:0};return '<div class="product-row"><div class="product-top"><span class="product-name">'+esc(n)+'</span><span class="badge">'+g.qty+' sold</span></div><div class="product-meta">Sell: '+money(state.products.find(p=>p.name===n)?.selling_price||0)+' · Cost: '+(state.products.find(p=>p.name===n)?.cost_known?money(state.products.find(p=>p.name===n).cost_price):'<span class="warning">Not set</span>')+'</div><div style="display:flex;gap:18px;margin-top:12px;font-size:12px"><span>Revenue <b>'+money(g.revenue)+'</b></span><span>Profit <b class="profit">'+money(g.profit)+'</b></span></div><div class="product-actions"><button class="btn secondary small" onclick="editProductByName('+JSON.stringify(n)+')">Edit Product</button></div></div>'}).join('')||'<div class="empty">No products yet.</div>';
@@ -240,26 +226,14 @@ function renderAnalytics(){
 }
 async function assistantSend(){
  const input=$('assistantInput'),txt=input.value.trim(); if(!txt)return;
- addBubble('user',txt); input.value='';
- const saleLike=/^\s*\d+\s+[a-z]/i.test(txt) || /\b(i\s+sold|sold|sell|sale)\b.*\b\d+\b/i.test(txt);
+ addBubble('user',txt); input.value=''; addTyping();
  try{
-   if(!saleLike) addTyping();
-   const endpoint=saleLike?'/api/sales':'/api/assistant';
-   const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt})});
-   const d=await r.json();
-   if(!r.ok){removeTyping();addBubble('bot',d.message||'I could not process that.');return}
-   if(!saleLike) removeTyping();
-   if(saleLike){
-     addBubble('bot',(d.message||'Sale saved.')+(d.sales?'\n'+d.sales.map(x=>x.product+': '+x.quantity+' × '+money(x.unit_price)+' = '+money(x.total)+(x.cost_known?'':' · cost not set, profit pending')).join('\n'):''));
-     await loadData(); toast('Sale data saved successfully');
-   }else{
-     addBubble('bot',d.message||'I could not find that information.');
-   }
- }catch(e){addBubble('bot','I could not connect to SALES FLOW right now. Please try again.')}
+   const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt})});
+   const d=await r.json(); removeTyping();
+   if(!r.ok){addBubble('bot',d.message||'I could not process that.');return}
+   addBubble('bot',d.message||'I could not find that information.');
+ }catch(e){removeTyping();addBubble('bot','Sorry, I could not connect right now.');}
 }
-function addTyping(){const div=document.createElement('div');div.id='typingBubble';div.className='bubble-row';div.innerHTML='<div class="bubble-avatar">F</div><div class="bubble bot"><span class="typing">Flowi is checking your saved data <i></i><i></i><i></i></span></div>';$('messages').appendChild(div);$('messages').scrollTop=$('messages').scrollHeight}
-function removeTyping(){$('typingBubble')?.remove()}
-function quickAsk(text){$('assistantInput').value=text;assistantSend()}
 function addBubble(type,text){const row=document.createElement('div');row.className='bubble-row '+type;const avatar=type==='bot'?'<div class="bubble-avatar">F</div>':'';const proof=type==='bot'?'<div class="data-proof">✓ <b>Flowi checked:</b> SALES FLOW database</div>':'';row.innerHTML=avatar+'<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+proof+'</div>';if(type==='user'){row.innerHTML='<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+'</div><div class="bubble-avatar">H</div>'}$('messages').appendChild(row);$('messages').scrollTop=$('messages').scrollHeight}
 async function saveManual(){
  const btn=document.querySelector('#view-add .form-actions .btn');
