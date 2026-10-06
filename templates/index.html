@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SALES FLOW — Sales & Profit Analytics</title>
+<title>SALEFLOW — Sales & Profit Analytics</title>
 <meta name="description" content="Turn Sales Messages into Business Insights.">
 <style>
 :root{--blue:#2563eb;--blue2:#3b82f6;--navy:#0f172a;--green:#16a34a;--orange:#f59e0b;--red:#dc2626;--bg:#f6f8fc;--card:#fff;--line:#e7ebf2;--muted:#64748b;--shadow:0 12px 35px rgba(15,23,42,.07);--radius:18px}
@@ -29,7 +29,7 @@
 
 <section id="landing" class="landing">
   <nav class="landing-nav">
-    <div class="brand"><div class="logo">↗</div> SALES FLOW</div>
+    <div class="brand"><div class="logo">↗</div> SALEFLOW</div>
     <button class="btn secondary" onclick="enterApp()">View Dashboard</button>
   </nav>
   <div class="landing-hero">
@@ -39,7 +39,7 @@
       <p class="landing-copy">Track sales, calculate profit, understand your products and make smarter business decisions — all in one place.</p>
       <div class="hero-actions"><button class="btn" onclick="enterApp()">Get Started →</button><button class="btn secondary" onclick="enterApp()">View Dashboard</button></div>
     </div>
-    <div class="hero-card"><div class="mini-window"><div class="mini-top"><strong>SALES FLOW</strong><small>Business Overview</small></div><div class="mini-body"><div class="mini-kpis"><div class="mini-kpi"><small>Revenue</small><strong>₹24.5K</strong></div><div class="mini-kpi"><small>Profit</small><strong>₹8.2K</strong></div><div class="mini-kpi"><small>Orders</small><strong>42</strong></div></div><div class="fake-chart"></div></div></div></div>
+    <div class="hero-card"><div class="mini-window"><div class="mini-top"><strong>SALEFLOW</strong><small>Business Overview</small></div><div class="mini-body"><div class="mini-kpis"><div class="mini-kpi"><small>Revenue</small><strong>₹24.5K</strong></div><div class="mini-kpi"><small>Profit</small><strong>₹8.2K</strong></div><div class="mini-kpi"><small>Orders</small><strong>42</strong></div></div><div class="fake-chart"></div></div></div></div>
   </div>
   <div class="feature-grid">
     <div class="feature"><div class="feature-icon">💬</div><h3>Smart Sales Entry</h3><p>Send a simple message like “2 coffee, 3 tea” and organize it automatically.</p></div>
@@ -51,7 +51,7 @@
 
 <div id="app" class="app">
 <aside id="sidebar" class="sidebar">
-  <div class="side-brand"><div class="brand"><div class="logo">↗</div> SALES FLOW</div><div style="font-size:10px;color:#94a3b8;margin:8px 0 0 51px">Sales Intelligence</div></div>
+  <div class="side-brand"><div class="brand"><div class="logo">↗</div> SALEFLOW</div><div style="font-size:10px;color:#94a3b8;margin:8px 0 0 51px">Sales Intelligence</div></div>
   <nav class="nav">
     <button class="active" data-view="assistant">✦ <span>FLOWI AI Assistant</span></button>
   </nav>
@@ -70,7 +70,7 @@
         <div class="flowi-kicker">✦ FLOWI AI SALES COMPANION <span class="flowi-live"><i></i> ONLINE</span></div>
         <h1>Hi, I'm <span>FLOWI</span> 👋</h1>
         <p>I turn everyday sales messages into clear business answers, calculations and insights.</p>
-        <div class="flowi-hero-pills"><span>Sales Automation</span><span>Profit Intelligence</span><span>Business Insights</span></div><div class="flowi-real-data"><i></i> REAL DATA MODE · answers are calculated from saved SALES FLOW records</div>
+        <div class="flowi-hero-pills"><span>Sales Automation</span><span>Profit Intelligence</span><span>Business Insights</span></div><div class="flowi-real-data"><i></i> REAL DATA MODE · answers are calculated from saved SALEFLOW records</div>
       </div>
       <div class="flowi-orbit">
         <div class="orbit-ring ring-a"></div><div class="orbit-ring ring-b"></div>
@@ -88,7 +88,7 @@
         <div class="flowi-chat-card">
           <div class="flowi-chat-head"><div class="flowi-mini-avatar">F</div><div><strong>FLOWI</strong><small>AI Sales Companion · Ready to help</small></div><span class="flowi-online"><i></i> Ready</span></div>
           <div id="messages" class="flowi-messages">
-            <div class="flowi-message ai"><div class="msg-avatar">F</div><div><div class="msg-card">Hi! I’m FLOWI. I use the sales actually saved in your SALES FLOW database. Ask me a question, or tell me about a sale.</div><span class="msg-source">SALES FLOW intelligence</span></div></div>
+            <div class="flowi-message ai"><div class="msg-avatar">F</div><div><div class="msg-card">Hi! I’m FLOWI. I use the sales actually saved in your SALEFLOW database. Ask me a question, or tell me about a sale.</div><span class="msg-source">SALEFLOW intelligence</span></div></div>
           </div>
           <div class="flowi-try"><span>Try asking</span><button onclick="quickAsk('What is today’s profit?')">💰 Today's Profit</button><button onclick="quickAsk('Which product sells the most?')">🏆 Best Product</button><button onclick="quickAsk('Show this month sales')">📈 Monthly Sales</button><button onclick="quickAsk('Do I have low stock?')">⚠ Low Stock</button></div>
           <div class="flowi-composer"><button class="composer-icon" title="Voice placeholder">🎤</button><input id="assistantInput" placeholder="Tell FLOWI about your sale..." onkeydown="if(event.key==='Enter')assistantSend()"><button class="composer-send" onclick="assistantSend()">Send <span>↗</span></button></div>
@@ -125,13 +125,13 @@ function showView(name){
   if(mainScroller)mainScroller.scrollTo({top:0,left:0,behavior:'auto'});
   document.querySelectorAll('section.view').forEach(v=>v.classList.remove('active'));
   const target=$('view-'+name);
-  if(!target){console.error('SALES FLOW: view not found',name);return}
+  if(!target){console.error('SALEFLOW: view not found',name);return}
   target.classList.add('active');
   target.style.setProperty('display','block','important');
   target.style.setProperty('visibility','visible','important');
   target.style.setProperty('opacity','1','important');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
-  const titles={dashboard:['Good afternoon 👋',"Here's your business performance overview."],assistant:['Flowi — AI Sales Assistant','Ask Flowi about sales, revenue, profit and business insights.'],add:['Add Sale','Record a new transaction with complete details.'],records:['Sales Records','Review every stored sales transaction.'],products:['Products','Understand your product catalogue and performance.'],analytics:['Analytics','Explore trends and business performance.'],reports:['Reports','Turn your sales data into useful business reports.'],export:['Export Center','Download your business data for further analysis.'],settings:['Settings','Manage your SALES FLOW workspace.']};
+  const titles={dashboard:['Good afternoon 👋',"Here's your business performance overview."],assistant:['Flowi — AI Sales Assistant','Ask Flowi about sales, revenue, profit and business insights.'],add:['Add Sale','Record a new transaction with complete details.'],records:['Sales Records','Review every stored sales transaction.'],products:['Products','Understand your product catalogue and performance.'],analytics:['Analytics','Explore trends and business performance.'],reports:['Reports','Turn your sales data into useful business reports.'],export:['Export Center','Download your business data for further analysis.'],settings:['Settings','Manage your SALEFLOW workspace.']};
   $('pageTitle').textContent=titles[name][0];$('pageDesc').textContent=titles[name][1];if(innerWidth<761)$('sidebar').classList.remove('open');
   if(name==='analytics')renderAnalytics();if(name==='products')renderProducts();if(name==='records')loadData();
 }
@@ -144,12 +144,12 @@ async function loadData(){
     if(!Array.isArray(s)||!Array.isArray(p))throw new Error('Invalid database response');
     state.sales=s;state.products=p;state.insights=i;renderAll();
   }catch(e){
-    console.error('SALES FLOW load error:',e);
+    console.error('SALEFLOW load error:',e);
     toast('Could not load saved sales data. Please refresh.');
   }
 }
 function renderAll(){
-  [['dashboard',renderDashboard],['records',renderRecords],['products',renderProducts],['analytics',renderAnalytics],['reports',renderReports],['export',renderExport]].forEach(([name,fn])=>{try{fn()}catch(e){console.error('SALES FLOW '+name+' render error:',e);}});
+  [['dashboard',renderDashboard],['records',renderRecords],['products',renderProducts],['analytics',renderAnalytics],['reports',renderReports],['export',renderExport]].forEach(([name,fn])=>{try{fn()}catch(e){console.error('SALEFLOW '+name+' render error:',e);}});
 }
 function periodTotals(days){const now=new Date();const start=new Date(now);start.setHours(0,0,0,0);start.setDate(start.getDate()-(days-1));return state.sales.filter(x=>new Date(x.sold_at.replace(' ','T'))>=start).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
 function previousTotals(days){const now=new Date();const end=new Date(now);end.setHours(0,0,0,0);end.setDate(end.getDate()-days);const start=new Date(end);start.setDate(start.getDate()-days);return state.sales.filter(x=>{const d=new Date(x.sold_at.replace(' ','T'));return d>=start&&d<end}).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
@@ -203,7 +203,7 @@ async function assistantSend(){
     updateFlowiContext();
   }catch(e){
     removeTyping();
-    addBubble('bot','I’m having trouble reaching the SALES FLOW database right now. Please try again.');
+    addBubble('bot','I’m having trouble reaching the SALEFLOW database right now. Please try again.');
     setFlowiState('warning');
   }
 }
@@ -214,7 +214,7 @@ function setFlowiState(state){
   if(status)status.innerHTML=state==='processing'?'<i></i> PROCESSING':state==='warning'?'<i></i> CHECK REQUIRED':'<i></i> ONLINE';
 }
 function quickAsk(q){$('assistantInput').value=q;assistantSend()}
-function addBubble(type,text){const row=document.createElement('div');row.className='bubble-row '+type;const avatar=type==='bot'?'<div class="bubble-avatar">F</div>':'';const proof=type==='bot'?'<div class="data-proof">✓ <b>Flowi checked:</b> SALES FLOW database</div>':'';row.innerHTML=avatar+'<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+proof+'</div>';if(type==='user'){row.innerHTML='<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+'</div><div class="bubble-avatar">H</div>'}$('messages').appendChild(row);$('messages').scrollTop=$('messages').scrollHeight}
+function addBubble(type,text){const row=document.createElement('div');row.className='bubble-row '+type;const avatar=type==='bot'?'<div class="bubble-avatar">F</div>':'';const proof=type==='bot'?'<div class="data-proof">✓ <b>Flowi checked:</b> SALEFLOW database</div>':'';row.innerHTML=avatar+'<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+proof+'</div>';if(type==='user'){row.innerHTML='<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+'</div><div class="bubble-avatar">H</div>'}$('messages').appendChild(row);$('messages').scrollTop=$('messages').scrollHeight}
 setFlowiState('success');
 </script>
 </body></html>
