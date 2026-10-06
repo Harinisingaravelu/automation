@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, Response
 import sqlite3, re, csv, io, os, json
 from datetime import datetime, date, timedelta
 from pathlib import Path
+from openpyxl import Workbook
 
 BASE=Path(__file__).resolve().parent
 DB=Path(os.environ.get("SALES_DB_PATH",str(BASE/"sales.db")))
@@ -210,16 +211,24 @@ def api_report():
 
 @app.get("/api/export")
 def api_export():
-    kind=request.args.get("type","sales_csv");d=dashboard(request.args.get("period","all"),request.args.get("start"),request.args.get("end"));out=io.StringIO();w=csv.writer(out)
+    kind=request.args.get("type","sales_csv");d=dashboard(request.args.get("period","all"),request.args.get("start"),request.args.get("end"))
+    sales=sales_between(d["range"]["start"],d["range"]["end"])
+    headers=["ID","Date","Product","Category","Quantity","Selling Price","Cost Price","Revenue","Profit","Margin","Payment","Status"]
+    data=[[s["id"],s["sold_at"],s["product"],s["category"],s["quantity"],s["selling_price"],s["cost_price"],s["revenue"],s["profit"],money(s["profit"]/s["revenue"]*100 if s["revenue"] else 0),s["payment_method"],s["status"]] for s in sales]
     if kind=="products_csv":
-        w.writerow(["Product","Category","Cost","Selling","Stock","Units Sold","Revenue","Profit","Margin"])
+        out=io.StringIO();w=csv.writer(out);w.writerow(["Product","Category","Cost","Selling","Stock","Units Sold","Revenue","Profit","Margin"])
         for p in product_list():w.writerow([p["name"],p["category"],p["cost_price"],p["selling_price"],p["stock"],p["units_sold"],p["revenue"],p["profit"],money(p["profit"]/p["revenue"]*100 if p["revenue"] else 0)])
-        name="products.csv"
-    else:
-        w.writerow(["ID","Date","Product","Category","Quantity","Selling Price","Cost Price","Revenue","Profit","Margin","Payment","Status"])
-        for s in sales_between(d["range"]["start"],d["range"]["end"]):w.writerow([s["id"],s["sold_at"],s["product"],s["category"],s["quantity"],s["selling_price"],s["cost_price"],s["revenue"],s["profit"],money(s["profit"]/s["revenue"]*100 if s["revenue"] else 0),s["payment_method"],s["status"]])
-        name="sales.csv"
-    return Response(out.getvalue(),mimetype="text/csv",headers={"Content-Disposition":f"attachment; filename={name}"})
+        return Response(out.getvalue(),mimetype="text/csv",headers={"Content-Disposition":"attachment; filename=products.csv"})
+    if kind=="sales_excel":
+        wb=Workbook();ws=wb.active;ws.title="Sales";ws.append(headers)
+        for x in data:ws.append(x)
+        for col in ws.columns:
+            width=min(max(len(str(cell.value or "")) for cell in col)+2,28);ws.column_dimensions[col[0].column_letter].width=width
+        buf=io.BytesIO();wb.save(buf);buf.seek(0)
+        return Response(buf.getvalue(),mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",headers={"Content-Disposition":"attachment; filename=sales_flow.xlsx"})
+    out=io.StringIO();w=csv.writer(out);w.writerow(headers)
+    for x in data:w.writerow(x)
+    return Response(out.getvalue(),mimetype="text/csv",headers={"Content-Disposition":"attachment; filename=sales.csv"})
 
 @app.get("/api/settings")
 def api_settings():return jsonify({x["key"]:x["value"] for x in rows("SELECT key,value FROM settings")})
