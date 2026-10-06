@@ -246,6 +246,10 @@ def api_assistant():
     p=request.get_json(silent=True) or {};m=str(p.get("message","")).strip()
     if not m:return jsonify(ok=False,message="Please type a message."),400
     x=assistant(m);x.update(ok=True,assistant="FLOWI",source="SALES FLOW database");return jsonify(x)
+@app.post("/api/chat")
+def api_chat():
+    return api_assistant()
+
 @app.post("/api/reset")
 def api_reset():
     c=get_db();c.execute("DELETE FROM sales");c.execute("DELETE FROM reports")
