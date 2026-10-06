@@ -199,13 +199,38 @@ async function assistantSend(){
     removeTyping();
     if(!r.ok){addBubble('bot',d.message||'I could not process that request.');setFlowiState('warning');return}
     addBubble('bot',d.message||'I could not find that information in the saved database.');
-    setFlowiState(d.warning?'warning':'success');
+    if(d.sale_detected) addSaleConfirmation(d.sale_detected);
+    setFlowiState(d.warning?'warning':d.sale_detected?'processing':'success');
     updateFlowiContext();
   }catch(e){
     removeTyping();
     addBubble('bot','I’m having trouble reaching the SALES FLOW database right now. Please try again.');
     setFlowiState('warning');
   }
+}
+function addSaleConfirmation(s){
+  const row=document.createElement('div');row.className='bubble-row bot';
+  const rev=money(s.revenue),cost=money(s.cost),profit=money(s.profit);
+  row.innerHTML='<div class="bubble-avatar">F</div><div class="bubble bot sale-confirm-card"><div style="font-weight:900;color:#2563eb;margin-bottom:8px">SALE DETECTED</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px"><span>Product</span><b>'+esc(s.product)+'</b><span>Quantity</span><b>'+s.quantity+'</b><span>Revenue</span><b>'+rev+'</b><span>Cost</span><b>'+cost+'</b><span>Profit</span><b style="color:#16a34a">'+profit+'</b><span>Stock after</span><b>'+s.stock_after+'</b></div><div style="display:flex;gap:8px;margin-top:12px"><button class="sf-btn green" onclick="confirmDetectedSale('+JSON.stringify(s).replace(/"/g,'&quot;')+')">✓ Confirm Sale</button><button class="sf-btn secondary" onclick="editDetectedSale('+JSON.stringify(s).replace(/"/g,'&quot;')+')">✎ Edit</button></div><div class="data-proof" style="margin-top:9px">✓ Cost matched from the saved Products database</div></div>';
+  $('messages').appendChild(row);$('messages').scrollTop=$('messages').scrollHeight;
+}
+async function confirmDetectedSale(s){
+  try{
+    setFlowiState('processing');
+    const r=await fetch('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},s,{confirm:true})),cache:'no-store'});
+    const d=await r.json();if(!r.ok)throw new Error(d.message||'Could not save sale');
+    addBubble('bot','Sale confirmed and saved ✓ '+s.quantity+' × '+s.product+' added to SALES FLOW. Revenue '+money(s.revenue)+', profit '+money(s.profit)+'. Stock is now '+d.sale.stock_after+' units if this product has a stock value.');
+    setFlowiState('success');await loadData();updateFlowiContext();
+  }catch(e){addBubble('bot','I could not save that sale: '+e.message);setFlowiState('warning')}
+}
+async function editDetectedSale(s){
+  await showView('add');
+  if($('addProduct'))$('addProduct').value=s.product_id;
+  if($('addQty'))$('addQty').value=s.quantity;
+  if($('addSell'))$('addSell').value=s.selling_price;
+  if($('addCost'))$('addCost').value=s.cost_price;
+  ['addQty','addSell','addCost'].forEach(function(id){if($(id))$(id).dispatchEvent(new Event('input'))});
+  toast('Sale moved to Add Sale for editing');
 }
 function setFlowiState(state){
   const stage=document.querySelector('.flowi-orbit');
