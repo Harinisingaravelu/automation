@@ -47,7 +47,7 @@
     <button class="active" data-view="dashboard">▦ <span>Dashboard</span></button>
     <button data-view="assistant">💬 <span>Sales Assistant</span></button>
     <button data-view="add">＋ <span>Add Sale</span></button>
-    <button data-view="records">▤ <span>Sales Records</span></button>
+    <button data-view="records">▤ <span>Recent Sales</span></button>
     <button data-view="products">□ <span>Products</span></button>
     <button data-view="analytics">◔ <span>Analytics</span></button>
     <button data-view="reports">▥ <span>Reports</span></button>
@@ -206,7 +206,7 @@ function renderRecords(){
 function renderProducts(){
  const groups={};state.sales.forEach(x=>{const name=String(x.product||'Unknown');groups[name]??={qty:0,revenue:0,profit:0};groups[name].qty+=Number(x.quantity||0);groups[name].revenue+=Number(x.revenue||0);groups[name].profit+=Number(x.profit||0)});
  const names=[...new Set([...state.products.map(x=>x.name),...Object.keys(groups)])].sort();$('productCards').innerHTML=names.map(n=>{const g=groups[n]||{qty:0,revenue:0,profit:0};return '<div class="product-row"><div class="product-top"><span class="product-name">'+esc(n)+'</span><span class="badge">'+g.qty+' sold</span></div><div class="product-meta">Sell: '+money(state.products.find(p=>p.name===n)?.selling_price||0)+' · Cost: '+(state.products.find(p=>p.name===n)?.cost_known?money(state.products.find(p=>p.name===n).cost_price):'<span class="warning">Not set</span>')+'</div><div style="display:flex;gap:18px;margin-top:12px;font-size:12px"><span>Revenue <b>'+money(g.revenue)+'</b></span><span>Profit <b class="profit">'+money(g.profit)+'</b></span></div><div class="product-actions"><button class="btn secondary small" onclick="editProductByName('+JSON.stringify(n)+')">Edit Product</button></div></div>'}).join('')||'<div class="empty">No products yet.</div>';
- $('qualityRecords').textContent=state.sales.length;$('qualityProducts').textContent=names.length;
+ if($('qualityRecords'))$('qualityRecords').textContent=state.sales.length;if($('qualityProducts'))$('qualityProducts').textContent=names.length;
 }
 function renderReports(){
  const revenue=state.sales.reduce((s,x)=>s+Number(x.revenue||0),0);
