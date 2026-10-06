@@ -153,13 +153,20 @@ def health():
 def products(): return jsonify([dict(r) for r in product_rows()])
 
 def assistant_reply(message):
-    """Friendly assistant. Business numbers come only from the sales database."""
+    """Friendly assistant. Every numeric answer is calculated from the current SALES FLOW database."""
     text = re.sub(r"\s+", " ", (message or "").strip())
     low = text.lower()
 
     def totals(where="1=1"):
         conn=get_db()
-        r=conn.execute("SELECT COALESCE(SUM(quantity),0) items, COUNT(*) orders, COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(profit),0) profit FROM sales WHERE "+where).fetchone()
+        r=conn.execute("""
+            SELECT
+              COALESCE(SUM(quantity),0) items,
+              COUNT(*) orders,
+              COALESCE(SUM(revenue),0) revenue,
+              COALESCE(SUM(CASE WHEN cost_known=1 THEN profit ELSE 0 END),0) profit,
+              SUM(CASE WHEN cost_known=0 THEN 1 ELSE 0 END) pending_profit
+            FROM sales WHERE """+where).fetchone()
         conn.close()
         return dict(r)
 
@@ -174,29 +181,43 @@ def assistant_reply(message):
 
     def product_stats(name, where="1=1"):
         conn=get_db()
-        p=conn.execute("SELECT id,name FROM products WHERE lower(name)=lower(?)",(name,)).fetchone()
+        p=conn.execute("SELECT id,name,stock,cost_known FROM products WHERE lower(name)=lower(?)",(name,)).fetchone()
         if not p:
             conn.close()
             return None
-        r=conn.execute("SELECT COALESCE(SUM(quantity),0) qty,COUNT(*) orders,COALESCE(SUM(revenue),0) revenue,COALESCE(SUM(profit),0) profit FROM sales WHERE product_id=? AND "+where,(p["id"],)).fetchone()
+        r=conn.execute("""
+            SELECT COALESCE(SUM(quantity),0) qty,COUNT(*) orders,
+                   COALESCE(SUM(revenue),0) revenue,
+                   COALESCE(SUM(CASE WHEN cost_known=1 THEN profit ELSE 0 END),0) profit,
+                   SUM(CASE WHEN cost_known=0 THEN 1 ELSE 0 END) pending_profit
+            FROM sales WHERE product_id=? AND """+where,(p["id"],)).fetchone()
         conn.close()
-        return {"name":p["name"],**dict(r)}
+        return {"name":p["name"],"stock":p["stock"],**dict(r)}
+
+    def low_stock_items():
+        conn=get_db()
+        rows=conn.execute("SELECT name,stock FROM products WHERE stock>0 AND stock<=10 ORDER BY stock ASC,name ASC").fetchall()
+        conn.close()
+        return [dict(x) for x in rows]
 
     if re.search(r"\b(hi|hii|hello|hey|hai|vanakkam|good morning|good afternoon|good evening)\b",low):
-        return "Hi 😊 I’m Flowi, your SALES FLOW AI companion. Ask me about your real sales, revenue, profit, products, stock, or business performance."
+        return "Hi 😊 I’m Flowi, your SALES FLOW AI companion. I only use the sales and product records saved in your database for business numbers. Ask me anything."
 
     if re.search(r"\b(thank you|thanks|thank|super|great)\b",low):
-        return "You’re welcome 😊 Flowi is here whenever you want to check your real sales data."
+        return "You’re welcome 😊 I’m here whenever you want to check your real saved sales data."
 
     is_today=bool(re.search(r"\b(today|todays|today's|innaiku|indru)\b",low))
     is_week=bool(re.search(r"\b(this week|weekly|week|intha week|indha week)\b",low))
     is_month=bool(re.search(r"\b(this month|monthly|month|intha month|indha month)\b",low))
     asks_profit=bool(re.search(r"\b(profit|profit evlo|laabam|labam)\b",low))
-    asks_revenue=bool(re.search(r"\b(revenue|turnover|varavu)\b",low))
+    asks_revenue=bool(re.search(r"\b(revenue|turnover|varavu|sales amount|total sales)\b",low))
     asks_qty=bool(re.search(r"\b(how many|quantity|qty|units|sold|sales|evlo.*sale|evlo.*sold)\b",low))
-    asks_orders=bool(re.search(r"\b(orders|order count|records)\b",low))
+    asks_orders=bool(re.search(r"\b(orders|order count|records|transactions)\b",low))
     asks_best=bool(re.search(r"\b(best|top|highest|most selling|best selling|top selling)\b",low))
     asks_margin=bool(re.search(r"\b(margin|profit margin)\b",low))
+    asks_stock=bool(re.search(r"\b(stock|inventory|left|available|low stock)\b",low))
+    asks_average=bool(re.search(r"\b(average order|aov|average sale)\b",low))
+    asks_product_count=bool(re.search(r"\b(how many products|number of products|product count)\b",low))
     product=find_product()
 
     today="date(sold_at)=date('now','localtime')"
@@ -204,6 +225,29 @@ def assistant_reply(message):
     month="strftime('%Y-%m',sold_at)=strftime('%Y-%m','now','localtime')"
     where=month if is_month else week if is_week else today if is_today else "1=1"
     period="this month" if is_month else "the last 7 days" if is_week else "today" if is_today else "all saved records"
+
+    if asks_stock:
+        if product:
+            conn=get_db()
+            p=conn.execute("SELECT name,stock FROM products WHERE lower(name)=lower(?)",(product,)).fetchone()
+            conn.close()
+            return f"{p['name']} has {p['stock']} units in stock right now." if p else "I could not find that product in the database."
+        low_items=low_stock_items()
+        if low_items:
+            return "Low-stock items right now: " + ", ".join(f"{x['name']} ({x['stock']} left)" for x in low_items) + "."
+        return "I checked the live product records. There are no items currently at or below 10 units of stock."
+
+    if asks_product_count:
+        conn=get_db()
+        count=conn.execute("SELECT COUNT(*) count FROM products").fetchone()["count"]
+        conn.close()
+        return f"There are {int(count)} products in the SALES FLOW product database."
+
+    if asks_average:
+        r=totals(where)
+        if not r["orders"]:
+            return f"I checked the real database, but there are no sales records for {period} yet."
+        return f"Your average order value for {period} is ₹{r['revenue']/r['orders']:,.2f}, calculated from {r['orders']} saved sales records."
 
     if product:
         r=product_stats(product,where)
@@ -213,33 +257,54 @@ def assistant_reply(message):
         if asks_qty or not (asks_profit or asks_revenue or asks_orders or asks_margin): parts.append(f"{r['qty']} units sold")
         if asks_orders: parts.append(f"{r['orders']} sales records")
         if asks_revenue: parts.append(f"₹{r['revenue']:,.2f} revenue")
-        if asks_profit: parts.append(f"₹{r['profit']:,.2f} profit")
-        if asks_margin: parts.append(f"{(r['profit']/r['revenue']*100 if r['revenue'] else 0):.1f}% profit margin")
+        if asks_profit:
+            if r["pending_profit"]:
+                parts.append(f"₹{r['profit']:,.2f} confirmed profit ({r['pending_profit']} record(s) still need cost data)")
+            else:
+                parts.append(f"₹{r['profit']:,.2f} profit")
+        if asks_margin:
+            if r["pending_profit"]:
+                parts.append("profit margin is not fully confirmed because some cost data is missing")
+            else:
+                parts.append(f"{(r['profit']/r['revenue']*100 if r['revenue'] else 0):.1f}% profit margin")
         return f"Sure 😊 From {period}, {r['name']} has "+", ".join(parts)+"."
 
     if asks_best:
         conn=get_db()
-        best=conn.execute("SELECT p.name,SUM(s.quantity) qty,SUM(s.revenue) revenue,SUM(s.profit) profit FROM sales s JOIN products p ON p.id=s.product_id WHERE "+where+" GROUP BY p.id ORDER BY revenue DESC LIMIT 1").fetchone()
+        best=conn.execute("""
+            SELECT p.name,SUM(s.quantity) qty,SUM(s.revenue) revenue,
+                   SUM(CASE WHEN s.cost_known=1 THEN s.profit ELSE 0 END) profit,
+                   SUM(CASE WHEN s.cost_known=0 THEN 1 ELSE 0 END) pending_profit
+            FROM sales s JOIN products p ON p.id=s.product_id
+            WHERE """+where+""" GROUP BY p.id ORDER BY revenue DESC LIMIT 1""").fetchone()
         conn.close()
-        if not best: return "I checked the database, but there are no sales records to rank yet."
-        return f"Your top product by revenue is {best['name']} with {best['qty']} units sold, ₹{best['revenue']:,.2f} revenue and ₹{best['profit']:,.2f} profit."
+        if not best:
+            return "I checked the database, but there are no sales records to rank yet."
+        extra=f", ₹{best['profit']:,.2f} confirmed profit" if not best["pending_profit"] else ", profit is partly pending because some cost data is missing"
+        return f"Your top product by revenue is {best['name']} with {best['qty']} units sold and ₹{best['revenue']:,.2f} revenue{extra}."
 
     r=totals(where)
     if asks_margin:
-        if not r["orders"]: return f"I checked the real sales data, but there are no records for {period} yet."
+        if not r["orders"]:
+            return f"I checked the real sales data, but there are no records for {period} yet."
+        if r["pending_profit"]:
+            return f"I can confirm ₹{r['revenue']:,.2f} revenue for {period}, but profit margin is not fully confirmed because {r['pending_profit']} saved record(s) have no cost data."
         return f"Your profit margin for {period} is {(r['profit']/r['revenue']*100 if r['revenue'] else 0):.1f}%, based on ₹{r['revenue']:,.2f} revenue and ₹{r['profit']:,.2f} profit."
 
     if asks_profit or asks_revenue or asks_qty or asks_orders or is_today or is_week or is_month:
-        if not r["orders"]: return f"I checked the real database, but there are no sales records for {period} yet."
+        if not r["orders"]:
+            return f"I checked the real database, but there are no sales records for {period} yet."
         parts=[]
-        if asks_profit: parts.append(f"profit ₹{r['profit']:,.2f}")
-        if asks_revenue: parts.append(f"revenue ₹{r['revenue']:,.2f}")
+        if asks_profit:
+            parts.append(f"₹{r['profit']:,.2f} confirmed profit" + (f" ({r['pending_profit']} record(s) need cost data)" if r["pending_profit"] else ""))
+        if asks_revenue: parts.append(f"₹{r['revenue']:,.2f} revenue")
         if asks_qty: parts.append(f"{r['items']} items sold")
         if asks_orders: parts.append(f"{r['orders']} sales records")
-        if not parts: parts=[f"{r['orders']} sales records",f"{r['items']} items sold",f"₹{r['revenue']:,.2f} revenue",f"₹{r['profit']:,.2f} profit"]
+        if not parts:
+            parts=[f"{r['orders']} sales records",f"{r['items']} items sold",f"₹{r['revenue']:,.2f} revenue",f"₹{r['profit']:,.2f} confirmed profit"]
         return f"Here’s the real picture for {period}: "+", ".join(parts)+"."
 
-    return "I’m Flowi 😊 Try: “What is today’s profit?”, “How many coffee were sold?”, “What is my revenue this month?”, “Which product sells the most?”, “Show low stock items”, or “What is my profit margin?”"
+    return "I’m Flowi 😊 Try: “What is today’s profit?”, “How many coffee were sold?”, “What is my revenue this month?”, “Which product sells the most?”, “Show low stock items”, “What is my stock?”, or “What is my profit margin?”"
 
 
 @app.post("/api/assistant")
