@@ -35,9 +35,9 @@ def init_db():
     if "status" not in {x["name"] for x in c.execute("PRAGMA table_info(sales)")}: c.execute("ALTER TABLE sales ADD COLUMN status TEXT NOT NULL DEFAULT 'Completed'")
     defaults=[("T-Shirt","Clothing",500,800,100,10),("Shirt","Clothing",600,1000,75,10),("Jeans","Clothing",900,1400,50,10),("Shoes","Footwear",1200,1800,30,5),("Laptop Bag","Accessories",1000,1600,25,5),("Cap","Accessories",150,300,120,10)]
     for p in defaults:c.execute("INSERT OR IGNORE INTO products(name,category,cost_price,selling_price,stock,low_stock_threshold,cost_known) VALUES(?,?,?,?,?,?,1)",p)
-    for k,v in {"business_name":"SALES FLOW","owner_name":"","email":"","phone":"","currency":"INR ₹","default_payment":"Cash","low_stock_threshold":"10","date_format":"DD/MM/YYYY","notifications":"true","theme":"light"}.items():
+    for k,v in {"business_name":"SALEFLOW","owner_name":"","email":"","phone":"","currency":"INR ₹","default_payment":"Cash","low_stock_threshold":"10","date_format":"DD/MM/YYYY","notifications":"true","theme":"light"}.items():
         c.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)",(k,v))
-    if c.execute("SELECT COUNT(*) FROM users").fetchone()[0]==0:c.execute("INSERT INTO users(name) VALUES(?)",("SALES FLOW Owner",))
+    if c.execute("SELECT COUNT(*) FROM users").fetchone()[0]==0:c.execute("INSERT INTO users(name) VALUES(?)",("SALEFLOW Owner",))
     # Seed a small, clearly removable demo dataset only when the database has no sales.
     # All dashboard/analytics/report calculations still read from the sales table.
     if c.execute("SELECT COUNT(*) FROM sales").fetchone()[0]==0:
