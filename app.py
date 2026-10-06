@@ -115,7 +115,7 @@ def save_sale(data):
     rev=qty*sell-discount;profit=rev-qty*cost;dt=str(data.get("date") or date.today().isoformat())[:10]
     c=get_db();cur=c.execute("""INSERT INTO sales(sold_at,product_id,quantity,selling_price,cost_price,revenue,discount,profit,cost_known,payment_method,status)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)""",(dt+" "+datetime.now().strftime("%H:%M:%S.%f"),pid,qty,sell,cost,rev,discount,profit,1,payment,"Completed"))
-    c.execute("UPDATE products SET stock=stock-? WHERE id=?",(qty,pid));c.commit();sid=cur.lastrowid;c.close();return row("""SELECT s.id,s.sold_at,s.sale_type,p.id product_id,p.name product,p.category,s.quantity,s.selling_price,s.cost_price,s.revenue,s.discount,s.profit,s.cost_known,s.payment_method,s.status FROM sales s JOIN products p ON p.id=s.product_id WHERE s.id=?""",(sid,))
+    c.execute("UPDATE products SET stock=stock-? WHERE id=?",(qty,pid));c.commit();sid=cur.lastrowid;c.close();out=row("""SELECT s.id,s.sold_at,s.sale_type,p.id product_id,p.name product,p.category,s.quantity,s.selling_price,s.cost_price,s.revenue,s.discount,s.profit,s.cost_known,s.payment_method,s.status,p.stock stock_after FROM sales s JOIN products p ON p.id=s.product_id WHERE s.id=?""",(sid,));return out
 def update_sale(sid,data):
     old=row("SELECT * FROM sales WHERE id=?",(sid,))
     if not old:raise ValueError("Sale not found.")
