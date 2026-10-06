@@ -349,7 +349,7 @@ def chart():
 def export_csv():
     conn=get_db()
     rows=conn.execute("""SELECT s.sold_at,s.sale_type,p.name product,s.quantity,s.selling_price,
-    s.cost_price,s.revenue,s.profit FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC""").fetchall()
+    s.discount,s.cost_price,s.revenue,s.profit FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC""").fetchall()
     conn.close(); out=io.StringIO(); w=csv.writer(out)
     w.writerow(["Date","Type","Product","Quantity","Rate (₹)","Discount (₹)","Net Sales (₹)","Cost Price (₹)","Profit (₹)"])
     for r in rows: w.writerow([r["sold_at"],r["sale_type"],r["product"],r["quantity"],r["selling_price"],r["discount"],r["revenue"],r["cost_price"],r["profit"]])
