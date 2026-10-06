@@ -28,7 +28,7 @@ def init_db():
     sc={x["name"] for x in c.execute("PRAGMA table_info(sales)")}
     for n,s in {"category":"ALTER TABLE products ADD COLUMN category TEXT NOT NULL DEFAULT 'General'","low_stock_threshold":"ALTER TABLE products ADD COLUMN low_stock_threshold INTEGER NOT NULL DEFAULT 10","cost_known":"ALTER TABLE products ADD COLUMN cost_known INTEGER NOT NULL DEFAULT 1"}.items():
         if n not in pc:c.execute(s)
-    for n,s in {"discount":"ALTER TABLE sales ADD COLUMN discount REAL NOT NULL DEFAULT 0","cost_known":"ALTER TABLE sales ADD COLUMN cost_known INTEGER NOT NULL DEFAULT 1","payment_method":"ALTER TABLE sales ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'Cash'","status":"ALTER TABLE sales ADD COLUMN status TEXT NOT NULL DEFAULT 'Completed"}.items():
+    for n,s in {"discount":"ALTER TABLE sales ADD COLUMN discount REAL NOT NULL DEFAULT 0","cost_known":"ALTER TABLE sales ADD COLUMN cost_known INTEGER NOT NULL DEFAULT 1","payment_method":"ALTER TABLE sales ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'Cash'","status":"ALTER TABLE sales ADD COLUMN status TEXT NOT NULL DEFAULT 'Completed'"}.items():
         if n not in sc:c.execute(s)
     # Repair the status migration safely if an old database did not have it.
     if "status" not in {x["name"] for x in c.execute("PRAGMA table_info(sales)")}: c.execute("ALTER TABLE sales ADD COLUMN status TEXT NOT NULL DEFAULT 'Completed'")
