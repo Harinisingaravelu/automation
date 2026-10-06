@@ -38,6 +38,18 @@ def init_db():
     for k,v in {"business_name":"SALES FLOW","owner_name":"","email":"","phone":"","currency":"INR ₹","default_payment":"Cash","low_stock_threshold":"10","date_format":"DD/MM/YYYY","notifications":"true","theme":"light"}.items():
         c.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)",(k,v))
     if c.execute("SELECT COUNT(*) FROM users").fetchone()[0]==0:c.execute("INSERT INTO users(name) VALUES(?)",("SALES FLOW Owner",))
+    # Seed a small, clearly removable demo dataset only when the database has no sales.
+    # All dashboard/analytics/report calculations still read from the sales table.
+    if c.execute("SELECT COUNT(*) FROM sales").fetchone()[0]==0:
+        demo=[("T-Shirt",5,800,"UPI",0),("Shirt",3,1000,"Cash",0),("Jeans",2,1400,"Card",1),("Shoes",1,1800,"UPI",2),("Laptop Bag",2,1600,"Online",3)]
+        for name,qty,sell,pay,days_ago in demo:
+            p=c.execute("SELECT * FROM products WHERE name=?",(name,)).fetchone()
+            if not p or int(p["stock"])<qty: continue
+            cost=float(p["cost_price"]); rev=qty*float(sell); profit=rev-qty*cost
+            sold=(date.today()-timedelta(days=days_ago)).isoformat()+" "+("10:15:00" if days_ago else datetime.now().strftime("%H:%M:%S"))
+            c.execute("""INSERT INTO sales(sold_at,product_id,quantity,selling_price,cost_price,revenue,discount,profit,cost_known,payment_method,status)
+                         VALUES(?,?,?,?,?,?,?,?,?,?,?)""",(sold,p["id"],qty,float(sell),cost,rev,0,profit,1,pay,"Completed"))
+            c.execute("UPDATE products SET stock=stock-? WHERE id=?",(qty,p["id"]))
     c.commit();c.close()
 
 def product_list():
@@ -100,12 +112,28 @@ def find_product(name):
 def detect_sale(msg):
     s=re.sub(r"\s+"," ",str(msg).strip().lower())
     if not re.search(r"\b(sold|sell|sale|selling)\b",s):return None
-    m=re.search(r"\b(\d+)\s+([a-z][a-z0-9 -]*?)(?:\s+(?:for|at|@)\s*(?:rs\.?|₹)?\s*([\d,]+(?:\.\d+)?))?\s*(?:each|per\s*(?:item|unit))?\b",s)
-    if not m:return None
-    qty=int(m.group(1));name=m.group(2).strip(" -");price=float(m.group(3).replace(",","")) if m.group(3) else None;p=find_product(name)
+    qty_m=re.search(r"\b(\d+)\b",s)
+    if not qty_m:return None
+    qty=int(qty_m.group(1))
+    # Match a real catalogue product instead of guessing an arbitrary word span.
+    p=None
+    for candidate in product_list():
+        if re.search(r"(?<![a-z0-9])"+re.escape(candidate["name"].lower())+r"(?![a-z0-9])",s):
+            p=candidate;break
+        if candidate["name"].lower().rstrip("s") in s:
+            p=candidate;break
     if not p:return None
-    unit=price if price is not None else float(p["selling_price"]);rev=qty*unit;cost=qty*float(p["cost_price"])
-    return {"product_id":p["id"],"product":p["name"],"category":p["category"],"quantity":qty,"selling_price":unit,"cost_price":p["cost_price"],"revenue":money(rev),"cost":money(cost),"profit":money(rev-cost),"stock_before":p["stock"],"stock_after":max(0,p["stock"]-qty)}
+    price_m=re.search(r"(?:for|at|@)\s*(?:rs\.?|₹)?\s*([\d,]+(?:\.\d+)?)",s)
+    price=float(price_m.group(1).replace(",","")) if price_m else float(p["selling_price"])
+    per_unit=bool(re.search(r"\b(each|per\s*(?:item|unit))\b",s))
+    # "10 shirts for 10000" is treated as a total sale amount;
+    # "5 T-Shirts for 800 each" is treated as a unit price.
+    unit=price if per_unit or not price_m else (price/qty if qty>1 else price)
+    rev=qty*unit;cost=qty*float(p["cost_price"])
+    return {"product_id":p["id"],"product":p["name"],"category":p["category"],"quantity":qty,
+            "selling_price":money(unit),"cost_price":p["cost_price"],"revenue":money(rev),
+            "cost":money(cost),"profit":money(rev-cost),"stock_before":p["stock"],
+            "stock_after":max(0,p["stock"]-qty)}
 def save_sale(data):
     pid=int(data["product_id"]);qty=int(data["quantity"]);sell=float(data["selling_price"]);cost=float(data["cost_price"]);discount=float(data.get("discount",0) or 0);payment=data.get("payment_method","Cash")
     p=row("SELECT * FROM products WHERE id=?",(pid,))
@@ -160,8 +188,9 @@ def api_products():return jsonify(product_list())
 @app.post("/api/products")
 def api_products_create():
     p=request.get_json(silent=True) or {}
-    try:name=str(p["name"]).strip();category=str(p.get("category","General"));cost=float(p.get("cost_price",0));sell=float(p.get("selling_price",0));stock=int(p.get("stock",0));th=int(p.get("low_stock_threshold",10))
+    try:name=str(p["name"]).strip();category=str(p.get("category","General")).strip() or "General";cost=float(p.get("cost_price",0));sell=float(p.get("selling_price",0));stock=int(p.get("stock",0));th=int(p.get("low_stock_threshold",10))
     except:return jsonify(ok=False,message="Enter valid product values."),400
+    if not name or cost<0 or sell<0 or stock<0 or th<0:return jsonify(ok=False,message="Prices, stock and threshold cannot be negative."),400
     c=get_db()
     try:cur=c.execute("INSERT INTO products(name,category,cost_price,selling_price,stock,low_stock_threshold,cost_known) VALUES(?,?,?,?,?,?,1)",(name,category,cost,sell,stock,th));c.commit();out=c.execute("SELECT * FROM products WHERE id=?",(cur.lastrowid,)).fetchone();c.close();return jsonify(ok=True,product=dict(out))
     except sqlite3.IntegrityError:c.close();return jsonify(ok=False,message="Product already exists."),409
@@ -253,8 +282,9 @@ def api_chat():
 @app.post("/api/reset")
 def api_reset():
     c=get_db();c.execute("DELETE FROM sales");c.execute("DELETE FROM reports")
-    for n,s in {"T-Shirt":100,"Shirt":75,"Jeans":50,"Shoes":30,"Laptop Bag":25,"Cap":120}.items():c.execute("UPDATE products SET stock=? WHERE name=?",(s,n))
-    c.commit();c.close();return jsonify(ok=True)
+    for n,stock in {"T-Shirt":100,"Shirt":75,"Jeans":50,"Shoes":30,"Laptop Bag":25,"Cap":120}.items():
+        c.execute("UPDATE products SET stock=? WHERE name=?",(stock,n))
+    c.commit();c.close();return jsonify(ok=True,message="Sales and reports cleared. Product stock restored.")
 
 init_db()
 if __name__=="__main__":app.run(host="0.0.0.0",port=int(os.environ.get("PORT",5000)),debug=False)
