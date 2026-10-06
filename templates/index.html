@@ -23,6 +23,30 @@
 @keyframes flowiFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}@keyframes flowiSpin{to{transform:rotate(360deg)}}@keyframes flowiNode{0%,100%{transform:translateY(0);opacity:.75}50%{transform:translateY(-8px);opacity:1}}
 @media(max-width:900px){.flowi-workspace{grid-template-columns:1fr}.flowi-context{display:block}.flowi-hero{padding:28px;min-height:260px}.flowi-orbit{width:260px;transform:scale(.85)}}@media(max-width:700px){.flowi-hero{padding:24px;display:block}.flowi-orbit{margin:5px auto -20px}.flowi-hero h1{font-size:34px}.flowi-workspace{gap:12px}.flowi-messages{height:320px}.flowi-context{order:2}.flowi-try button{flex:1}}
 .flowi-real-data{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:7px 10px;border-radius:999px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;font-size:10px;font-weight:900}.flowi-real-data i{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px #22c55e22}.flowi-orbit[data-state="processing"] .core-face{animation:flowiPulse .7s ease-in-out infinite}.flowi-orbit[data-state="warning"] .core-face{filter:saturate(.65)}.flowi-orbit[data-state="success"] .core-face{animation:flowiSuccess .8s ease-out}@keyframes flowiPulse{50%{transform:scale(1.08)}}@keyframes flowiSuccess{0%{transform:scale(.94)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+/* ===== SALEFLOW DASHBOARD ===== */
+.dashboard-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:18px}
+.dashboard-hero h2{margin:0;font-size:22px;letter-spacing:-.6px}.dashboard-hero p{margin:6px 0 0;color:var(--muted);font-size:12px}
+.dashboard-filters{display:flex;gap:6px;flex-wrap:wrap}
+.dash-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.dash-kpi{background:#fff;border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:var(--shadow);min-width:0}
+.dash-kpi-top{display:flex;justify-content:space-between;align-items:center}.dash-kpi-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#eef4ff;color:var(--blue);font-size:17px}.dash-kpi.green .dash-kpi-icon{background:#ecfdf3;color:#16a34a}.dash-kpi.orange .dash-kpi-icon{background:#fff7ed;color:#ea580c}.dash-kpi.purple .dash-kpi-icon{background:#f5f3ff;color:#7c3aed}
+.dash-kpi-label{font-size:11px;color:var(--muted);margin-top:13px}.dash-kpi-value{font-size:25px;font-weight:950;margin-top:4px;letter-spacing:-.5px}.dash-kpi-change{font-size:10px;margin-top:5px}
+.dash-grid-main{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.8fr);gap:16px;margin-bottom:16px}
+.dash-grid-bottom{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:16px}
+.dash-panel{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);padding:17px;min-width:0}
+.dash-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}.dash-panel-head h3{margin:0;font-size:15px}.dash-panel-head span{font-size:10px;color:var(--muted)}
+.dash-chart{height:245px;display:flex;align-items:stretch;gap:10px;padding-top:8px}.chart-y{display:flex;flex-direction:column;justify-content:space-between;color:#94a3b8;font-size:9px;padding:4px 0 25px;width:28px;text-align:right}.chart-area{position:relative;flex:1;border-left:1px solid #edf0f4;border-bottom:1px solid #edf0f4;background:repeating-linear-gradient(to bottom,transparent 0,transparent 48px,#eef2f7 49px);overflow:hidden}.chart-svg{width:100%;height:calc(100% - 24px);display:block}.chart-labels{height:24px;display:flex;align-items:flex-end;justify-content:space-between;color:#94a3b8;font-size:8px;padding:0 3px}
+.chart-empty{height:100%;display:grid;place-items:center;color:#94a3b8;font-size:11px}
+.dash-summary{display:grid;gap:9px}.summary-row{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border-radius:12px;background:#f8fafc}.summary-row span{font-size:10px;color:#64748b}.summary-row strong{font-size:13px}.summary-row strong.green{color:#16a34a}.summary-row strong.blue{color:#2563eb}
+.rank-list{display:grid;gap:9px}.rank-row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:9px}.rank-no{width:26px;height:26px;border-radius:8px;background:#eef4ff;color:#2563eb;display:grid;place-items:center;font-size:10px;font-weight:900}.rank-name{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rank-meta{font-size:9px;color:#94a3b8;margin-top:2px}.rank-value{text-align:right;font-size:11px;font-weight:900}.mini-progress{height:5px;background:#eef2f7;border-radius:99px;overflow:hidden;margin-top:5px}.mini-progress span{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:99px}
+.dash-alert{display:none;margin-bottom:16px;padding:12px 14px;border-radius:13px;border:1px solid #fed7aa;background:#fffaf3;color:#9a3412;font-size:11px}.dash-alert.show{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stock-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eef2f7}.stock-row:last-child{border-bottom:0}.stock-name{font-size:11px;font-weight:800}.stock-cat{font-size:9px;color:#94a3b8;margin-top:2px}.stock-badge{padding:5px 8px;border-radius:99px;font-size:9px;font-weight:900;background:#ecfdf3;color:#15803d}.stock-badge.warn{background:#fff7ed;color:#c2410c}.stock-badge.danger{background:#fef2f2;color:#dc2626}
+.recent-table{width:100%;min-width:0!important;font-size:10px}.recent-table th,.recent-table td{padding:9px 6px}.recent-table th{font-size:9px}.recent-table td{font-size:10px}.dash-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}.quick-action{border:1px solid #e2e8f0;background:#f8fafc;border-radius:11px;padding:11px;text-align:left;cursor:pointer}.quick-action:hover{border-color:#93c5fd;background:#eef4ff}.quick-action b{display:block;font-size:11px}.quick-action span{display:block;font-size:9px;color:#64748b;margin-top:3px}
+.insight-card{background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:1px solid #dbeafe;border-radius:13px;padding:12px;margin-top:10px}.insight-card small{font-size:9px;color:#64748b;font-weight:900;letter-spacing:.08em}.insight-card p{font-size:10px;line-height:1.55;margin:6px 0 0;color:#334155}
+@media(max-width:1100px){.dash-kpis{grid-template-columns:repeat(2,1fr)}.dash-grid-bottom{grid-template-columns:1fr 1fr}.dash-grid-bottom .dash-panel:first-child{grid-column:1/-1}}
+@media(max-width:760px){.dashboard-hero{display:block}.dashboard-filters{margin-top:12px}.dash-kpis{grid-template-columns:1fr 1fr}.dash-grid-main,.dash-grid-bottom{grid-template-columns:1fr}.dash-grid-bottom .dash-panel:first-child{grid-column:auto}}
+@media(max-width:480px){.dash-kpis{grid-template-columns:1fr}.dash-chart{height:210px}}
 </style>
 </head>
 <body>
@@ -53,7 +77,15 @@
 <aside id="sidebar" class="sidebar">
   <div class="side-brand"><div class="brand"><div class="logo">↗</div> SALEFLOW</div><div style="font-size:10px;color:#94a3b8;margin:8px 0 0 51px">Sales Intelligence</div></div>
   <nav class="nav">
-    <button class="active" data-view="assistant">✦ <span>FLOWI AI Assistant</span></button>
+    <button class="active" data-view="dashboard" onclick="showView('dashboard')">🏠 <span>Dashboard</span></button>
+    <button data-view="assistant" onclick="showView('assistant')">🤖 <span>FLOWI AI Assistant</span></button>
+    <button data-view="add" onclick="showView('add')">➕ <span>Add Sale</span></button>
+    <button data-view="records" onclick="showView('records')">💰 <span>Sales Records</span></button>
+    <button data-view="products" onclick="showView('products')">📦 <span>Products</span></button>
+    <button data-view="analytics" onclick="showView('analytics')">📊 <span>Analytics</span></button>
+    <button data-view="reports" onclick="showView('reports')">📈 <span>Reports</span></button>
+    <button data-view="export" onclick="showView('export')">📤 <span>Export</span></button>
+    <button data-view="settings" onclick="showView('settings')">⚙️ <span>Settings</span></button>
   </nav>
   <div class="side-bottom"><div style="font-size:10px;color:#94a3b8;padding:10px">Turn Sales Messages into Business Insights.</div></div>
 </aside>
@@ -63,6 +95,65 @@
     <div style="display:flex;gap:12px;align-items:flex-start"><button class="btn secondary mobile-menu" onclick="toggleSide()">☰</button><div><h1 id="pageTitle">Good afternoon 👋</h1><p id="pageDesc">Here's your business performance overview.</p></div></div>
     <div class="date-chip">📅 <span id="todayLabel"></span></div>
   </div>
+
+  <section id="view-dashboard" class="view active">
+    <div class="dashboard-hero">
+      <div><h2>Business Overview</h2><p>Track revenue, profit, orders, products and stock from your saved sales data.</p></div>
+      <div class="dashboard-filters">
+        <button class="filter active" data-period="today" onclick="setDashboardPeriod('today',this)">Today</button>
+        <button class="filter" data-period="7d" onclick="setDashboardPeriod('7d',this)">7 Days</button>
+        <button class="filter" data-period="30d" onclick="setDashboardPeriod('30d',this)">30 Days</button>
+        <button class="filter" data-period="all" onclick="setDashboardPeriod('all',this)">All Time</button>
+      </div>
+    </div>
+    <div id="dashAlert" class="dash-alert"><span>⚠️ <b id="dashAlertText"></b></span><button class="btn small orange" onclick="showView('products')">View Products</button></div>
+    <div class="dash-kpis">
+      <div class="dash-kpi"><div class="dash-kpi-top"><span class="dash-kpi-icon">₹</span></div><div class="dash-kpi-label">TOTAL REVENUE</div><div class="dash-kpi-value" id="dashRevenue">₹0</div><div class="dash-kpi-change neutral" id="dashRevenueChange">Loading...</div></div>
+      <div class="dash-kpi green"><div class="dash-kpi-top"><span class="dash-kpi-icon">↗</span></div><div class="dash-kpi-label">TOTAL PROFIT</div><div class="dash-kpi-value" id="dashProfit">₹0</div><div class="dash-kpi-change neutral" id="dashProfitChange">Loading...</div></div>
+      <div class="dash-kpi orange"><div class="dash-kpi-top"><span class="dash-kpi-icon">🧾</span></div><div class="dash-kpi-label">ORDERS</div><div class="dash-kpi-value" id="dashOrders">0</div><div class="dash-kpi-change neutral" id="dashOrdersChange">Loading...</div></div>
+      <div class="dash-kpi purple"><div class="dash-kpi-top"><span class="dash-kpi-icon">📦</span></div><div class="dash-kpi-label">ITEMS SOLD</div><div class="dash-kpi-value" id="dashItems">0</div><div class="dash-kpi-change neutral" id="dashItemsChange">Loading...</div></div>
+    </div>
+    <div class="dash-grid-main">
+      <div class="dash-panel">
+        <div class="dash-panel-head"><div><h3>Sales & Profit Trend</h3><span>Daily performance for selected period</span></div><span id="dashRangeLabel">Today</span></div>
+        <div id="dashChart" class="dash-chart"></div>
+      </div>
+      <div class="dash-panel">
+        <div class="dash-panel-head"><div><h3>Performance Summary</h3><span>Business health at a glance</span></div></div>
+        <div class="dash-summary">
+          <div class="summary-row"><span>Profit Margin</span><strong class="green" id="dashMargin">0%</strong></div>
+          <div class="summary-row"><span>Average Order Value</span><strong class="blue" id="dashAov">₹0</strong></div>
+          <div class="summary-row"><span>Best by Revenue</span><strong id="dashBestRevenue">—</strong></div>
+          <div class="summary-row"><span>Best by Units</span><strong id="dashBestUnits">—</strong></div>
+          <div class="summary-row"><span>Low Stock Items</span><strong id="dashLowCount">0</strong></div>
+        </div>
+        <div class="insight-card"><small>✦ FLOWI BUSINESS INSIGHT</small><p id="dashInsight">Your dashboard insight will appear here.</p></div>
+      </div>
+    </div>
+    <div class="dash-grid-bottom">
+      <div class="dash-panel">
+        <div class="dash-panel-head"><div><h3>Top Products</h3><span>Ranked by revenue</span></div><button class="filter" onclick="showView('products')">View all</button></div>
+        <div id="dashTopProducts" class="rank-list"></div>
+      </div>
+      <div class="dash-panel">
+        <div class="dash-panel-head"><div><h3>Stock Watch</h3><span>Products near their threshold</span></div><button class="filter" onclick="showView('products')">Manage</button></div>
+        <div id="dashStockWatch"></div>
+      </div>
+      <div class="dash-panel">
+        <div class="dash-panel-head"><div><h3>Recent Sales</h3><span>Latest transactions</span></div><button class="filter" onclick="showView('records')">View all</button></div>
+        <div class="table-wrap"><table class="recent-table"><thead><tr><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody id="dashRecentSales"></tbody></table></div>
+      </div>
+    </div>
+    <div class="dash-panel" style="margin-top:16px">
+      <div class="dash-panel-head"><div><h3>Quick Actions</h3><span>Jump directly to common tasks</span></div></div>
+      <div class="dash-quick">
+        <button class="quick-action" onclick="showView('add')"><b>➕ Add a Sale</b><span>Record a new transaction</span></button>
+        <button class="quick-action" onclick="showView('assistant')"><b>🤖 Ask FLOWI</b><span>Get answers from your sales data</span></button>
+        <button class="quick-action" onclick="showView('analytics')"><b>📊 Open Analytics</b><span>Explore trends and performance</span></button>
+        <button class="quick-action" onclick="showView('export')"><b>📤 Export Data</b><span>Download sales for analysis</span></button>
+      </div>
+    </div>
+  </section>
 
   <section id="view-assistant" class="view active">
     <div class="flowi-hero">
@@ -151,6 +242,80 @@ async function loadData(){
 function renderAll(){
   [['dashboard',renderDashboard],['records',renderRecords],['products',renderProducts],['analytics',renderAnalytics],['reports',renderReports],['export',renderExport]].forEach(([name,fn])=>{try{fn()}catch(e){console.error('SALEFLOW '+name+' render error:',e);}});
 }
+function setDashboardPeriod(period,btn){
+  document.querySelectorAll('.dashboard-filters .filter').forEach(x=>x.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  state.range=period;
+  renderDashboard(period);
+}
+function renderDashboard(period=state.range||'today'){
+  const d=state.insights&&state.insights.dashboard ? state.insights.dashboard : null;
+  if(!d)return;
+  const k=d.kpis||{};
+  $('dashRevenue').textContent=money(k.revenue);
+  $('dashProfit').textContent=money(k.profit);
+  $('dashOrders').textContent=Number(k.orders||0).toLocaleString('en-IN');
+  $('dashItems').textContent=Number(k.items||0).toLocaleString('en-IN');
+  const prev=d.previous||{};
+  setDashChange('dashRevenueChange',Number(k.revenue),Number(prev.revenue));
+  setDashChange('dashProfitChange',Number(k.profit),Number(prev.profit));
+  setDashChange('dashOrdersChange',Number(k.orders),Number(prev.orders));
+  setDashChange('dashItemsChange',Number(k.items),Number(prev.items));
+  $('dashMargin').textContent=(k.margin||0)+'%';
+  $('dashAov').textContent=money(Number(k.orders)?Number(k.revenue)/Number(k.orders):0);
+  $('dashBestRevenue').textContent=d.best?.revenue||'—';
+  $('dashBestUnits').textContent=d.best?.units||'—';
+  const low=d.low_stock||[];
+  $('dashLowCount').textContent=low.length;
+  $('dashRangeLabel').textContent=(d.range?.start||'')+' → '+(d.range?.end||'');
+  $('dashInsight').textContent=buildDashboardInsight(d);
+  const alert=$('dashAlert');
+  if(low.length){alert.classList.add('show');$('dashAlertText').textContent=low.length+' product'+(low.length>1?'s are':' is')+' at or below the low-stock threshold.'}else alert.classList.remove('show');
+  renderDashChart(d.trend||[]);
+  renderTopProducts(d.products||[]);
+  renderStockWatch(low);
+  renderRecentSales();
+}
+function setDashChange(id,current,previous){
+  const el=$(id);const p=pct(current,previous);
+  if(p===null){el.className='dash-kpi-change neutral';el.textContent='No previous period data';return}
+  el.className='dash-kpi-change '+(p>=0?'positive':'negative');
+  el.textContent=(p>=0?'↑ ':'↓ ')+Math.abs(p).toFixed(1)+'% vs previous period';
+}
+function buildDashboardInsight(d){
+  const k=d.kpis||{},p=d.products||[],low=d.low_stock||[];
+  if(!k.orders)return 'No sales are recorded for this period yet. Add a sale or tell FLOWI about a sale to start building your business insights.';
+  const top=p[0]?.product||'your top product';
+  const margin=Number(k.margin||0);
+  if(low.length)return top+' is your leading product, while '+low.length+' stock item'+(low.length>1?'s need':' needs')+' attention. Profit margin is '+margin+'%.';
+  return top+' is your top revenue product. You recorded '+k.orders+' orders and a '+margin+'% profit margin in this period.';
+}
+function renderDashChart(trend){
+  const box=$('dashChart');if(!trend.length){box.innerHTML='<div class="chart-empty">No sales data for this period</div>';return}
+  const vals=trend.map(x=>Number(x.revenue||0));const max=Math.max(...vals,1);
+  const w=760,h=205,pad=8;
+  const points=vals.map((v,i)=>{const x=pad+(i/(Math.max(vals.length-1,1)))*(w-pad*2);const y=h-pad-(v/max)*(h-pad*2);return [x,y]});
+  const line=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=line+' L '+points.at(-1)[0].toFixed(1)+' '+h+' L '+points[0][0].toFixed(1)+' '+h+' Z';
+  const labels=trend.map(x=>String(x.date||'').slice(5)).filter((x,i,a)=>a.length<8||i%Math.ceil(a.length/7)===0);
+  const labelHtml=labels.map(x=>'<span>'+x+'</span>').join('');
+  box.innerHTML='<div class="chart-y"><span>'+money(max)+'</span><span>'+money(max*.5)+'</span><span>₹0</span></div><div class="chart-area"><svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none"><path d="'+area+'" fill="#2563eb10"></path><path d="'+line+'" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg><div class="chart-labels">'+labelHtml+'</div></div>';
+}
+function renderTopProducts(items){
+  const box=$('dashTopProducts');if(!items.length){box.innerHTML='<div class="empty">No product sales in this period.</div>';return}
+  const max=Math.max(...items.map(x=>Number(x.revenue||0)),1);
+  box.innerHTML=items.slice(0,6).map((x,i)=>'<div class="rank-row"><div class="rank-no">'+(i+1)+'</div><div><div class="rank-name">'+esc(x.product)+'</div><div class="rank-meta">'+Number(x.units_sold||0)+' units · '+(x.margin||0)+'% margin</div><div class="mini-progress"><span style="width:'+Math.max(5,Number(x.revenue||0)/max*100)+'%"></span></div></div><div class="rank-value">'+money(x.revenue)+'</div></div>').join('');
+}
+function renderStockWatch(items){
+  const box=$('dashStockWatch');if(!items.length){box.innerHTML='<div class="empty">✓ Stock levels look healthy.</div>';return}
+  box.innerHTML=items.slice(0,7).map(x=>{const n=Number(x.stock||0),t=Number(x.low_stock_threshold||10);const cls=n===0?'danger':'warn';return '<div class="stock-row"><div><div class="stock-name">'+esc(x.name)+'</div><div class="stock-cat">'+esc(x.category||'General')+' · threshold '+t+'</div></div><span class="stock-badge '+cls+'">'+(n===0?'Out of stock':n+' left')+'</span></div>'}).join('');
+}
+function renderRecentSales(){
+  const box=$('dashRecentSales');const xs=state.sales||[];
+  if(!xs.length){box.innerHTML='<tr><td colspan="3" class="empty">No sales yet.</td></tr>';return}
+  box.innerHTML=xs.slice(0,6).map(x=>'<tr><td><b>'+esc(x.product)+'</b></td><td>'+Number(x.quantity||0)+'</td><td class="profit">'+money(x.revenue)+'</td></tr>').join('');
+}
+
 function periodTotals(days){const now=new Date();const start=new Date(now);start.setHours(0,0,0,0);start.setDate(start.getDate()-(days-1));return state.sales.filter(x=>new Date(x.sold_at.replace(' ','T'))>=start).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
 function previousTotals(days){const now=new Date();const end=new Date(now);end.setHours(0,0,0,0);end.setDate(end.getDate()-days);const start=new Date(end);start.setDate(start.getDate()-days);return state.sales.filter(x=>{const d=new Date(x.sold_at.replace(' ','T'));return d>=start&&d<end}).reduce((a,x)=>{a.revenue+=+x.revenue;a.profit+=+x.profit;a.items+=+x.quantity;a.orders++;return a},{revenue:0,profit:0,items:0,orders:0})}
 function pct(a,b){if(!b)return null;return ((a-b)/b*100)}
