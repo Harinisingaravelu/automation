@@ -120,7 +120,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2300)}
 function enterApp(){$('landing').style.display='none';$('app').style.display='block';document.body.classList.add('app-open');$('mainScrollFix')?.remove();$('app').querySelector('.main')?.scrollTo(0,0);if(typeof loadData==='function')loadData();window.showView('dashboard')}
 function toggleSide(){$('sidebar').classList.toggle('open')}
-function legacyShowView(name){
+function showView(name){
   const mainScroller=document.querySelector('.main');
   if(mainScroller)mainScroller.scrollTo({top:0,left:0,behavior:'auto'});
   document.querySelectorAll('section.view').forEach(v=>v.classList.remove('active'));
