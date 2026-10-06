@@ -32,6 +32,7 @@ def init_db():
         selling_price REAL NOT NULL,
         cost_price REAL NOT NULL,
         revenue REAL NOT NULL,
+        discount REAL NOT NULL DEFAULT 0,
         profit REAL NOT NULL,
         cost_known INTEGER NOT NULL DEFAULT 1,
         FOREIGN KEY(product_id) REFERENCES products(id)
@@ -43,6 +44,8 @@ def init_db():
         conn.execute("ALTER TABLE sales ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'Sale'")
     if "cost_known" not in cols:
         conn.execute("ALTER TABLE sales ADD COLUMN cost_known INTEGER NOT NULL DEFAULT 1")
+    if "discount" not in cols:
+        conn.execute("ALTER TABLE sales ADD COLUMN discount REAL NOT NULL DEFAULT 0")
     pcols = {r["name"] for r in conn.execute("PRAGMA table_info(products)").fetchall()}
     if "cost_known" not in pcols:
         conn.execute("ALTER TABLE products ADD COLUMN cost_known INTEGER NOT NULL DEFAULT 1")
@@ -107,8 +110,8 @@ def add_sales(items,sale_type="Sale",sale_date=None):
     for d in items:
         p=d["product"]
         cur=conn.execute("""INSERT INTO sales
-        (sold_at,sale_type,product_id,quantity,selling_price,cost_price,revenue,profit,cost_known)
-        VALUES(?,?,?,?,?,?,?,?,?)""",(stamp,sale_type,p["id"],d["quantity"],d["selling_price"],d["cost_price"],d["revenue"],d["profit"],d.get("cost_known",1)))
+        (sold_at,sale_type,product_id,quantity,selling_price,cost_price,revenue,discount,profit,cost_known)
+        VALUES(?,?,?,?,?,?,?,?,?,?)""",(stamp,sale_type,p["id"],d["quantity"],d["selling_price"],d["cost_price"],d["revenue"],d.get("discount",0),d["profit"],d.get("cost_known",1)))
         inserted_ids.append(cur.lastrowid)
         conn.execute("UPDATE products SET stock=MAX(stock-?,0) WHERE id=?",(d["quantity"],p["id"]))
     conn.commit(); conn.close()
@@ -254,7 +257,7 @@ def create_sales():
     if err: return jsonify(ok=False,message=err),400
     stamp, inserted_ids=add_sales(items,payload.get("type","Sale"),payload.get("date"))
     saved=[{"date":stamp,"type":payload.get("type","Sale"),"product":d["product"]["name"],
-            "quantity":d["quantity"],"unit_price":round(d["selling_price"],2),
+            "quantity":d["quantity"],"unit_price":round(d["selling_price"],2),"discount":round(d.get("discount",0),2),
             "total":round(d["revenue"],2),"profit":round(d["profit"],2),"cost_known":d.get("cost_known",1)} for d in items]
     return jsonify(ok=True,message="Saved "+", ".join(f'{d["quantity"]} × {d["product"]["name"]}' for d in items),sales=saved,record_ids=inserted_ids,stored_count=len(inserted_ids),summary=summary("today"))
 
@@ -262,9 +265,11 @@ def create_sales():
 def manual_sale():
     p=request.get_json(silent=True) or {}
     try:
-        qty=int(p.get("quantity",0)); unit=float(p.get("unit_price",0))
-    except: return jsonify(ok=False,message="Quantity and rupees must be numbers."),400
-    if qty<=0 or unit<0: return jsonify(ok=False,message="Enter valid quantity and rupees."),400
+        qty=int(p.get("quantity",0)); unit=float(p.get("unit_price",0)); discount=float(p.get("discount",0) or 0)
+    except: return jsonify(ok=False,message="Quantity, rate, and discount must be numbers."),400
+    if qty<=0 or unit<0 or discount<0: return jsonify(ok=False,message="Enter valid quantity, rate, and discount."),400
+    gross=qty*unit
+    if discount>gross: return jsonify(ok=False,message="Discount cannot be greater than the gross sale amount."),400
     prod=find_or_create_product(p.get("product",""),unit)
     try:
         cost_value=float(p["cost_price"]) if p.get("cost_price","") not in ("",None) else float(prod["cost_price"])
@@ -275,12 +280,13 @@ def manual_sale():
     conn=get_db(); conn.execute("UPDATE products SET cost_price=?,cost_known=? WHERE id=?",(cost_value,1 if p.get("cost_price") not in ("",None) else int(prod["cost_known"]),prod["id"])); conn.commit()
     prod=conn.execute("SELECT * FROM products WHERE id=?",(prod["id"],)).fetchone(); conn.close()
     known=int(prod["cost_known"])==1
+    net_revenue=gross-discount
     d={"product":prod,"quantity":qty,"selling_price":unit,"cost_price":float(prod["cost_price"]),"cost_known":known,
-       "revenue":qty*unit,"profit":(unit-float(prod["cost_price"]))*qty if known else 0}
+       "discount":discount,"revenue":net_revenue,"profit":(net_revenue-float(prod["cost_price"])*qty) if known else 0}
     stamp, inserted_ids=add_sales([d],p.get("type","Sale"),p.get("date"))
     conn=get_db()
     saved=conn.execute("""SELECT s.id,s.sold_at,s.sale_type,p.name product,s.quantity,
-        s.selling_price,s.cost_price,s.revenue,s.profit,s.cost_known
+        s.selling_price,s.cost_price,s.revenue,s.discount,s.profit,s.cost_known
         FROM sales s JOIN products p ON p.id=s.product_id
         WHERE s.id=?""",(inserted_ids[0],)).fetchone()
     conn.close()
@@ -328,7 +334,7 @@ def api_summary(): return jsonify({p:summary(p) for p in ["today","week","month"
 def sales():
     conn=get_db()
     rows=conn.execute("""SELECT s.id,s.sold_at,s.sale_type,p.name product,s.quantity,
-    s.selling_price,s.cost_price,s.revenue,s.profit,s.cost_known
+    s.selling_price,s.cost_price,s.revenue,s.discount,s.profit,s.cost_known
     FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC""").fetchall()
     conn.close(); return jsonify([dict(r) for r in rows])
 
@@ -345,8 +351,8 @@ def export_csv():
     rows=conn.execute("""SELECT s.sold_at,s.sale_type,p.name product,s.quantity,s.selling_price,
     s.cost_price,s.revenue,s.profit FROM sales s JOIN products p ON p.id=s.product_id ORDER BY s.id DESC""").fetchall()
     conn.close(); out=io.StringIO(); w=csv.writer(out)
-    w.writerow(["Date","Type","Product","Quantity","Unit Price (₹)","Cost Price (₹)","Total (₹)","Profit (₹)"])
-    for r in rows: w.writerow([r["sold_at"],r["sale_type"],r["product"],r["quantity"],r["selling_price"],r["cost_price"],r["revenue"],r["profit"]])
+    w.writerow(["Date","Type","Product","Quantity","Rate (₹)","Discount (₹)","Net Sales (₹)","Cost Price (₹)","Profit (₹)"])
+    for r in rows: w.writerow([r["sold_at"],r["sale_type"],r["product"],r["quantity"],r["selling_price"],r["discount"],r["revenue"],r["cost_price"],r["profit"]])
     return Response(out.getvalue(),mimetype="text/csv",headers={"Content-Disposition":"attachment; filename=sales_data.csv"})
 
 @app.post("/api/reset")
