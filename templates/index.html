@@ -4,7 +4,6 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SALES FLOW — Sales & Profit Analytics</title>
 <meta name="description" content="Turn Sales Messages into Business Insights.">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 :root{--blue:#2563eb;--blue2:#3b82f6;--navy:#0f172a;--green:#16a34a;--orange:#f59e0b;--red:#dc2626;--bg:#f6f8fc;--card:#fff;--line:#e7ebf2;--muted:#64748b;--shadow:0 12px 35px rgba(15,23,42,.07);--radius:18px}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--navy)}body.app-open{overflow:hidden}button,input,select{font:inherit}button,a{transition:.2s ease}.hidden{display:none!important}
@@ -65,23 +64,6 @@
     <div class="date-chip">📅 <span id="todayLabel"></span></div>
   </div>
 
-  <section id="view-dashboard" class="view active">
-    <div class="page-head"><div><h1>Dashboard</h1><p>See your sales performance at a glance.</p></div></div>
-    <div class="two-col">
-      <div class="panel"><div class="panel-title"><div><h2>Sales Analytics</h2><p>Revenue and profit trend from your saved sales.</p></div></div><div class="chart-box"><canvas id="overviewChart"></canvas></div></div>
-      <div class="panel"><div class="panel-title"><div><h2>Today’s Profit & Loss</h2><p>Only today’s saved transactions.</p></div></div>
-        <div class="kpis" style="grid-template-columns:1fr 1fr">
-          <div class="kpi green"><div class="kpi-label">Today Profit</div><div class="kpi-value" id="todayProfit">₹0</div></div>
-          <div class="kpi orange"><div class="kpi-label">Today Loss</div><div class="kpi-value" id="todayLoss">₹0</div></div>
-        </div>
-        <div class="stat-list" style="margin-top:16px">
-          <div class="stat-item"><span>Today Net Sales</span><b id="todaySales">₹0</b></div>
-          <div class="stat-item"><span>Today Transactions</span><b id="todayOrders">0</b></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section id="view-assistant" class="view active">
     <div class="flowi-hero">
       <div class="flowi-hero-copy">
@@ -128,26 +110,9 @@
     </div>
   </section>
 
-  <section id="view-add" class="view"><div class="panel" style="max-width:850px"><div class="panel-title"><div><h2>Add Sale</h2><p>Add one complete sales transaction.</p></div></div><div class="form-grid"><div class="field"><label>Item / Product</label><input id="addProduct" class="input" placeholder="e.g. Coffee"></div><div class="field"><label>Quantity</label><input id="addQty" class="input" type="number" min="1" placeholder="2"></div><div class="field"><label>Sale Type</label><select id="addType"><option>Sale</option><option>Wholesale</option><option>Retail</option><option>Online</option><option>Other</option></select></div><div class="field"><label>Rate / Selling Price per Unit (₹)</label><input id="addPrice" class="input" type="number" min="0" step=".01" placeholder="50"></div><div class="field"><label>Discount (₹)</label><input id="addDiscount" class="input" type="number" min="0" step=".01" placeholder="0"></div><div class="field"><label>Cost Price per Unit (₹)</label><input id="addCost" class="input" type="number" min="0" step=".01" placeholder="30"></div><div class="field"><label>Date</label><input id="addDate" class="input" type="date"></div></div><div class="form-actions"><button class="btn" onclick="saveManual()">Save Sale</button><button class="btn secondary" onclick="clearManual()">Clear</button></div></div></section>
-
-  <section id="view-records" class="view">
-    <div class="panel">
-      <div class="panel-title"><div><h2>Recent Sales <span id="recordCount" class="record-count">0 records</span></h2><p>Latest transactions added from the Add Sale page.</p></div></div>
-      <div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Qty</th><th>Rate</th><th>Discount</th><th>Net Sales</th><th>Cost</th><th>Profit</th><th>Margin</th><th>Status</th></tr></thead><tbody id="allRows"></tbody></table></div>
-    </div>
-  </section>
-
-  <section id="view-products" class="view"><div class="panel"><div class="panel-title"><div><h2>Products</h2><p>Products are created automatically when you record a new item.</p></div></div><div id="productCards" class="products-grid"></div></div></section>
-
-  <section id="view-analytics" class="view"><div class="two-col"><div class="panel"><div class="panel-title"><div><h2>Revenue & Profit Trend</h2><p>Daily business performance</p></div></div><div class="chart-box"><canvas id="analyticsChart"></canvas></div></div><div class="panel"><div class="panel-title"><div><h2>Product Performance</h2><p>Revenue and profit contribution</p></div></div><div id="analyticsProducts"></div></div></div><div class="section-grid"><div class="panel"><div class="panel-title"><h2>Business Insights</h2></div><div id="insights" class="stat-list"></div></div><div class="panel"><div class="panel-title"><h2>Data Quality</h2></div><div class="stat-list"><div class="stat-item"><span>Stored sales records</span><b id="qualityRecords">0</b></div><div class="stat-item"><span>Unique products</span><b id="qualityProducts">0</b></div><div class="stat-item"><span>Export available</span><b>CSV</b></div></div></div></div></section>
-
-  <section id="view-reports" class="view"><div class="report-grid"><div class="report-card"><h3>Total Net Sales</h3><strong id="reportRevenue" style="font-size:28px">₹0</strong><p>Net sales after recorded discounts.</p></div><div class="report-card"><h3>Total Profit</h3><strong id="reportProfit" class="profit" style="font-size:28px">₹0</strong><p>Profit calculated from saved cost and net sales.</p></div><div class="report-card"><h3>Transactions</h3><strong id="reportOrders" style="font-size:28px">0</strong><p>Every Add Sale is stored as a separate transaction.</p></div><div class="report-card"><h3>Units Sold</h3><strong id="reportItems" style="font-size:28px">0</strong><p>Total quantity across all saved transactions.</p></div><div class="report-card"><h3>Discount Given</h3><strong id="reportDiscount" style="font-size:28px">₹0</strong><p>Total discounts recorded across sales.</p></div><div class="report-card"><h3>Product Performance</h3><p>Open product-level revenue, units and profit analysis.</p><button class="btn secondary" onclick="showView('products')">View Products</button></div></div></section>
-
-  <section id="view-export" class="view"><div class="panel" style="max-width:900px"><div class="panel-title"><div><h2>Export Center</h2><p>Download the same saved transaction data used by your analytics.</p></div></div><div class="insight-strip"><div class="insight-mini"><small>Records ready</small><strong id="exportRecords">0</strong></div><div class="insight-mini"><small>Products</small><strong id="exportProducts">0</strong></div><div class="insight-mini"><small>Format</small><strong>CSV</strong></div><div class="insight-mini"><small>Source</small><strong>Database</strong></div></div><div class="setting"><div><strong>Sales Data — CSV</strong><span>Date, type, item, quantity, rate, discount, net sales, cost and profit.</span></div><a class="btn green" href="/api/export">Download CSV</a></div></div></section>
-
-  <section id="view-settings" class="view"><div class="panel"><div class="panel-title"><div><h2>Settings</h2><p>Simple controls for your SALES FLOW workspace.</p></div></div><div class="settings-list"><div class="setting"><div><strong>Automation status</strong><span>Sales messages can be parsed and saved automatically.</span></div><div class="switch on"></div></div><div class="setting"><div><strong>Business data storage</strong><span>Current deployment uses the application's database.</span></div><div class="switch on"></div></div><div class="setting"><div><strong>Reset sales records</strong><span>Delete all saved sales data. Products remain available.</span></div><button class="btn secondary" onclick="resetData()">Reset Data</button></div></div></div></section>
-</main></div>
-<div id="toast" class="toast"></div><script>
+  </main></div>
+<div id="toast" class="toast"></div>
+<script>
 const state={sales:[],products:[],range:7,charts:{},insights:null};
 const $=id=>document.getElementById(id);
 const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
@@ -250,36 +215,6 @@ function setFlowiState(state){
 }
 function quickAsk(q){$('assistantInput').value=q;assistantSend()}
 function addBubble(type,text){const row=document.createElement('div');row.className='bubble-row '+type;const avatar=type==='bot'?'<div class="bubble-avatar">F</div>':'';const proof=type==='bot'?'<div class="data-proof">✓ <b>Flowi checked:</b> SALES FLOW database</div>':'';row.innerHTML=avatar+'<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+proof+'</div>';if(type==='user'){row.innerHTML='<div class="bubble '+type+'">'+esc(text).replace(/\n/g,'<br>')+'</div><div class="bubble-avatar">H</div>'}$('messages').appendChild(row);$('messages').scrollTop=$('messages').scrollHeight}
-async function saveManual(){
- const btn=document.querySelector('#view-add .form-actions .btn');
- const p={product:$('addProduct').value.trim(),quantity:$('addQty').value,unit_price:$('addPrice').value,discount:$('addDiscount').value||0,cost_price:$('addCost').value,type:$('addType').value,date:$('addDate').value};
- if(!p.product||!p.quantity||p.unit_price===''){toast('Item, quantity and rate are required');return}
- btn?.classList.add('save-btn-loading');if(btn)btn.textContent='Saving to database...';
- try{
-   const r=await fetch('/api/sales/manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-   const d=await r.json();
-   if(!r.ok||!d.stored||!d.record){toast(d.message||'Could not confirm database save');return}
-   lastStoredCount=d.stored_count||d.record_ids?.length||1;showSaveSuccess(d.record);clearManual();await loadData();
- }catch(e){toast('Could not connect to the database. Sale was not confirmed.')}
- finally{btn?.classList.remove('save-btn-loading');if(btn)btn.textContent='Save Sale'}
-}
-let lastStoredCount=1;function dStoredCount(){return lastStoredCount}
-function showSaveSuccess(x){
- $('savedDetails').innerHTML='<div class="saved-row"><span>Transaction ID</span><strong>#'+esc(x.id)+'</strong></div><div class="saved-row"><span>Records stored</span><strong>'+esc(dStoredCount())+'</strong></div>'+
- '<div class="saved-row"><span>Product</span><strong>'+esc(x.product)+'</strong></div>'+
- '<div class="saved-row"><span>Quantity</span><strong>'+x.quantity+' unit'+(x.quantity==1?'':'s')+'</strong></div>'+
- '<div class="saved-row"><span>Rate</span><strong>'+money(x.selling_price)+'</strong></div>'+
- '<div class="saved-row"><span>Discount</span><strong>'+money(x.discount)+'</strong></div>'+
- '<div class="saved-row"><span>Net Sales</span><strong>'+money(x.revenue)+'</strong></div>'+
- '<div class="saved-row"><span>Cost</span><strong>'+(x.cost_known?money(x.cost_price*x.quantity):'Not set')+'</strong></div>'+
- '<div class="saved-row"><span>Profit</span><strong class="profit">'+(x.cost_known?money(x.profit):'Pending cost')+'</strong></div>'+
- '<div class="saved-row"><span>Saved At</span><strong>'+esc(x.sold_at)+'</strong></div>';
- $('saveSuccess').classList.add('show');
-}
-function closeSaveSuccess(){$('saveSuccess').classList.remove('show')}
-function clearManual(){$('addProduct').value='';$('addQty').value='';$('addPrice').value='';$('addDiscount').value='';$('addCost').value='';$('addDate').value=new Date().toISOString().slice(0,10)}
-async function editProductByName(name){const p=state.products.find(x=>x.name===name);if(!p)return;const selling=prompt('Selling price per unit (₹):',p.selling_price);if(selling===null)return;const cost=prompt('Cost price per unit (₹):',p.cost_price);if(cost===null)return;const stock=prompt('Current stock:',p.stock);if(stock===null)return;const r=await fetch('/api/products/'+p.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:p.name,selling_price:selling,cost_price:cost,stock})});const d=await r.json();if(!r.ok){toast(d.message||'Could not update product');return}toast('Product updated');await loadData()}
-async function resetData(){if(confirm('Delete all saved sales data? This cannot be undone.')){await fetch('/api/reset',{method:'POST'});toast('Sales records reset');await loadData()}}
 setFlowiState('success');
 </script>
 </body></html>
