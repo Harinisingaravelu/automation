@@ -170,8 +170,7 @@ def assistant(msg):
 
 @app.route("/")
 def home():
-    html=render_template("index.html")
-    return html.replace("</head>",'<link rel="stylesheet" href="/static/platform.css?v=2"><script src="/static/platform.js?v=2"></script></head>')
+    return render_template("index.html")
 @app.after_request
 def no_cache(r):
     if request.path=="/":r.headers["Cache-Control"]="no-store, no-cache, must-revalidate, max-age=0"
