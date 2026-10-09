@@ -38,18 +38,7 @@ def init_db():
     for k,v in {"business_name":"SALEFLOW","owner_name":"","email":"","phone":"","currency":"INR ₹","default_payment":"Cash","low_stock_threshold":"10","date_format":"DD/MM/YYYY","notifications":"true","theme":"light"}.items():
         c.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)",(k,v))
     if c.execute("SELECT COUNT(*) FROM users").fetchone()[0]==0:c.execute("INSERT INTO users(name) VALUES(?)",("SALEFLOW Owner",))
-    # Seed a small, clearly removable demo dataset only when the database has no sales.
-    # All dashboard/analytics/report calculations still read from the sales table.
-    if c.execute("SELECT COUNT(*) FROM sales").fetchone()[0]==0:
-        demo=[("T-Shirt",5,800,"UPI",0),("Shirt",3,1000,"Cash",0),("Jeans",2,1400,"Card",1),("Shoes",1,1800,"UPI",2),("Laptop Bag",2,1600,"Online",3)]
-        for name,qty,sell,pay,days_ago in demo:
-            p=c.execute("SELECT * FROM products WHERE name=?",(name,)).fetchone()
-            if not p or int(p["stock"])<qty: continue
-            cost=float(p["cost_price"]); rev=qty*float(sell); profit=rev-qty*cost
-            sold=(date.today()-timedelta(days=days_ago)).isoformat()+" "+("10:15:00" if days_ago else datetime.now().strftime("%H:%M:%S"))
-            c.execute("""INSERT INTO sales(sold_at,product_id,quantity,selling_price,cost_price,revenue,discount,profit,cost_known,payment_method,status)
-                         VALUES(?,?,?,?,?,?,?,?,?,?,?)""",(sold,p["id"],qty,float(sell),cost,rev,0,profit,1,pay,"Completed"))
-            c.execute("UPDATE products SET stock=stock-? WHERE id=?",(qty,p["id"]))
+    # Never create demo sales automatically. Dashboard and FLOWI use only user-entered records.
     c.commit();c.close()
 
 def product_list():
@@ -74,8 +63,12 @@ def sales_between(a,b):
     return rows("""SELECT s.*,p.name product,p.category FROM sales s JOIN products p ON p.id=s.product_id
       WHERE date(s.sold_at) BETWEEN date(?) AND date(?) ORDER BY s.sold_at,s.id""",(a,b))
 def aggregate(xs):
-    rev=sum(float(x["revenue"]) for x in xs); profit=sum(float(x["profit"]) for x in xs if int(x.get("cost_known",1)))
-    return {"revenue":money(rev),"cost":money(rev-profit),"profit":money(profit),"orders":len(xs),"items":sum(int(x["quantity"]) for x in xs),"margin":money(profit/rev*100 if rev else 0),"pending_cost":sum(1 for x in xs if not int(x.get("cost_known",1)))}
+    rev=sum(float(x["revenue"]) for x in xs)
+    known=[x for x in xs if int(x.get("cost_known",1))]
+    cost=sum(float(x.get("revenue",0))-float(x.get("profit",0)) for x in known)
+    profit=sum(float(x["profit"]) for x in known)
+    pending=sum(1 for x in xs if not int(x.get("cost_known",1)))
+    return {"revenue":money(rev),"cost":money(cost),"profit":money(profit),"orders":len(xs),"items":sum(int(x["quantity"]) for x in xs),"margin":money(profit/rev*100 if rev else 0),"pending_cost":pending,"loss":money(sum(min(0,float(x.get("profit",0))) for x in known))}
 
 def dashboard(period="30d",start=None,end=None):
     a,b=bounds(period,start,end); xs=sales_between(a,b); k=aggregate(xs); pm={}
@@ -157,16 +150,39 @@ def update_sale(sid,data):
     c.execute("""UPDATE sales SET sold_at=?,product_id=?,quantity=?,selling_price=?,cost_price=?,revenue=?,discount=?,profit=?,cost_known=1,payment_method=?,status=? WHERE id=?""",(str(data.get("date") or old["sold_at"])[:10]+" "+datetime.now().strftime("%H:%M:%S.%f"),pid,qty,sell,cost,rev,discount,profit,data.get("payment_method",old["payment_method"]),data.get("status",old["status"]),sid));c.commit();c.close();return row("""SELECT s.id,s.sold_at,s.sale_type,p.id product_id,p.name product,p.category,s.quantity,s.selling_price,s.cost_price,s.revenue,s.discount,s.profit,s.cost_known,s.payment_method,s.status FROM sales s JOIN products p ON p.id=s.product_id WHERE s.id=?""",(sid,))
 
 def assistant(msg):
-    d=detect_sale(msg)
-    if d:return {"message":f"I found {d['quantity']} × {d['product']}. Revenue ₹{d['revenue']:,.2f}, cost ₹{d['cost']:,.2f}, profit ₹{d['profit']:,.2f}. Confirm before I save it.","sale_detected":d}
-    low=msg.lower();period="this_month" if "month" in low else "7d" if "week" in low else "today" if "today" in low else "30d";a=analytics(period);k=a["dashboard"]["kpis"]
-    if any(x in low for x in ["hi","hello","hey","vanakkam"]):return {"message":"Hi 👋 I’m FLOWI. I’m connected to your SALES FLOW database. Ask me about sales, profit, products, stock or reports."}
-    if "low stock" in low:return {"message":"Low stock: "+(", ".join(f"{p['name']} ({p['stock']} left)" for p in a["dashboard"]["low_stock"]) if a["dashboard"]["low_stock"] else "Everything is above its configured threshold.")}
-    if "best" in low or "most" in low or "top" in low:return {"message":f"Your best-selling product is {a['dashboard']['best']['units']}." if a["dashboard"]["best"]["units"] else "There are no sales in this period yet."}
-    if "profit" in low and "margin" not in low:return {"message":f"Your profit is ₹{k['profit']:,.2f} for the selected period."}
-    if "revenue" in low or "sales amount" in low:return {"message":f"Your revenue is ₹{k['revenue']:,.2f} for the selected period."}
-    if "report" in low:return {"message":f"Report: {k['orders']} orders, {k['items']} items, ₹{k['revenue']:,.2f} revenue and ₹{k['profit']:,.2f} profit."}
-    return {"message":"I’m FLOWI 😊 Try “today profit”, “monthly report”, “best selling product”, “show low stock”, or “Sold 5 T-Shirts for ₹800 each”."}
+    raw=str(msg or '').strip()
+    low=raw.lower()
+    if re.fullmatch(r'(hi|hii+|hello|hey|hey there|vanakkam|வணக்கம்|ஹாய்|ஹலோ)[!. ,]*',low):
+        return {'message':'Hi 😊 Vanakkam! I’m FLOWI, your sales companion. How’s your business going today? Ask me today’s sales, profit/loss, best-selling product or stock. I’ll use only records saved in SALEFLOW.'}
+    if re.search(r'\\b(bought|buy|purchased|purchase|vanginen|vaanginen|vaangirukken|stock vaang)\\b|வாங்கினேன்|வாங்கிருக்கேன்',low) and not re.search(r'\\b(sold|sale|selling)\\b',low):
+        return {'message':'Got it 😊 You’re telling me about a purchase/stock-in, not a customer sale. I won’t add it to sales or profit. Update stock and cost under Products; tell me if you meant you sold the item instead.'}
+    sale=detect_sale(raw)
+    if sale:
+        return {'message':f"Got it 😊 I found {sale['quantity']} × {sale['product']} using your product catalogue. Revenue: ₹{sale['revenue']:,.2f}; estimated cost from saved product cost: ₹{sale['cost']:,.2f}; profit: ₹{sale['profit']:,.2f}. I have NOT saved this sale yet. Confirm it below to add it to your real records.", 'sale_detected':sale}
+    period='today' if any(x in low for x in ['today','todays',"today's",'inniku','innaiku','இன்று','இன்னிக்கு']) else 'this_month' if any(x in low for x in ['month','monthly','this month','intha maasam','இந்த மாதம்']) else '7d' if any(x in low for x in ['week','weekly','this week','intha vaaram','இந்த வாரம்']) else '30d'
+    a=analytics(period); dsh=a['dashboard']; k=dsh['kpis']; label={'today':'today','this_month':'this month','7d':'the last 7 days','30d':'the last 30 days'}[period]
+    if any(x in low for x in ['low stock','stock low','stock level','கையிருப்பு']):
+        items=dsh['low_stock']
+        return {'message':'📦 Stock check: '+(', '.join(f"{p['name']} — {p['stock']} left" for p in items) if items else 'No products are currently at or below their low-stock threshold.')}
+    if any(x in low for x in ['best','top product','most sold','best-selling','best selling','adhigama vith','அதிகம் விற்ற']):
+        best=dsh['best']['units']
+        return {'message':f"🏆 Best-selling product for {label}: {best}." if best else f"There are no saved sales for {label} yet, so I can’t identify a best-selling product."}
+    if any(x in low for x in ['margin','மார்ஜின்']):
+        return {'message':f"📊 {label.capitalize()} profit margin is {k['margin']:.2f}%. Revenue ₹{k['revenue']:,.2f}; recorded profit ₹{k['profit']:,.2f}."}
+    if any(x in low for x in ['loss','லாஸ்','நஷ்டம்']):
+        loss=abs(float(k.get('loss',0)))
+        if k.get('pending_cost',0): return {'message':f"⚠️ I can’t confirm complete profit/loss: {k['pending_cost']} sale(s) have no verified cost. Revenue ₹{k['revenue']:,.2f}; verified profit/loss includes only sales with known cost."}
+        return {'message':f"📉 {label.capitalize()} result: "+(f"recorded loss is ₹{loss:,.2f}." if loss>0 else f"no loss is recorded. Net profit is ₹{k['profit']:,.2f}.")}
+    if 'profit' in low or 'லாபம்' in low:
+        if k.get('pending_cost',0): return {'message':f"📊 {label.capitalize()} revenue is ₹{k['revenue']:,.2f} from {k['orders']} orders ({k['items']} items). Verified profit is ₹{k['profit']:,.2f}, but {k['pending_cost']} sale(s) have missing cost data, so this is not a complete profit total."}
+        return {'message':f"💰 {label.capitalize()} profit is ₹{k['profit']:,.2f}. Revenue ₹{k['revenue']:,.2f}; recorded cost ₹{k['cost']:,.2f}; {k['orders']} orders and {k['items']} items. Calculated from saved SALEFLOW records."}
+    if any(x in low for x in ['sale','sales','revenue','turnover','vithanai','விற்பனை','sales amount']):
+        note=f" Cost is missing for {k['pending_cost']} sale(s), so total cost/profit is incomplete." if k.get('pending_cost') else f" Recorded cost: ₹{k['cost']:,.2f}."
+        return {'message':f"🧾 {label.capitalize()} sales: ₹{k['revenue']:,.2f} revenue from {k['orders']} orders and {k['items']} items.{note} Verified profit: ₹{k['profit']:,.2f}. Figures are from saved records only."}
+    if any(x in low for x in ['report','summary','overview','details']):
+        note=f" Note: {k['pending_cost']} sale(s) have unknown costs." if k.get('pending_cost') else ' All included sales have cost data.'
+        return {'message':f"📈 {label.capitalize()} summary — Revenue ₹{k['revenue']:,.2f}; verified cost ₹{k['cost']:,.2f}; verified profit ₹{k['profit']:,.2f}; orders {k['orders']}; items {k['items']}; margin {k['margin']:.2f}%."+note}
+    return {'message':f"I can help 😊 For {label}, ask “today sales”, “today profit”, “am I in loss?”, “best-selling product”, or “low stock”. I calculate business figures from saved SALEFLOW records only and won’t guess missing numbers."}
 
 @app.route("/")
 def home():
