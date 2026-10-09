@@ -104,10 +104,13 @@ def find_product(name):
 
 def detect_sale(msg):
     s=re.sub(r"\s+"," ",str(msg).strip().lower())
-    if not re.search(r"\b(sold|sell|sale|selling)\b",s):return None
+    if not re.search(r"\b(sold|sell|sale|selling|vithen|vithuten|vitten)\b|விற்றேன்|விற்றேன்",s):return None
     qty_m=re.search(r"\b(\d+)\b",s)
-    if not qty_m:return None
-    qty=int(qty_m.group(1))
+    qty_words={"a":1,"an":1,"one":1,"two":2,"three":3,"four":4,"five":5,"six":6,"seven":7,"eight":8,"nine":9,"ten":10,"oru":1,"onnu":1,"rendu":2,"moonru":3,"naalu":4,"anju":5}
+    if qty_m: qty=int(qty_m.group(1))
+    else:
+        qty=next((n for word,n in qty_words.items() if re.search(r"(?<![a-z])"+re.escape(word)+r"(?![a-z])",s)),0)
+    if qty<=0:return None
     # Match a real catalogue product instead of guessing an arbitrary word span.
     p=None
     for candidate in product_list():
