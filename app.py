@@ -68,7 +68,7 @@ def aggregate(xs):
     cost=sum(float(x.get("revenue",0))-float(x.get("profit",0)) for x in known)
     profit=sum(float(x["profit"]) for x in known)
     pending=sum(1 for x in xs if not int(x.get("cost_known",1)))
-    return {"revenue":money(rev),"cost":money(cost),"profit":money(profit),"orders":len(xs),"items":sum(int(x["quantity"]) for x in xs),"margin":money(profit/rev*100 if rev else 0),"pending_cost":pending,"loss":money(sum(min(0,float(x.get("profit",0))) for x in known))}
+    return {"revenue":money(rev),"cost":money(cost),"profit":money(profit),"orders":len(xs),"items":sum(int(x["quantity"]) for x in xs),"margin":money(profit/rev*100 if rev else 0),"pending_cost":pending,"loss":money(min(0,profit))}
 
 def dashboard(period="30d",start=None,end=None):
     a,b=bounds(period,start,end); xs=sales_between(a,b); k=aggregate(xs); pm={}
@@ -157,7 +157,7 @@ def assistant(msg):
     low=raw.lower()
     if re.fullmatch(r'(hi|hii+|hello|hey|hey there|vanakkam|வணக்கம்|ஹாய்|ஹலோ)[!. ,]*',low):
         return {'message':'Hi 😊 Vanakkam! I’m FLOWI, your sales companion. How’s your business going today? Ask me today’s sales, profit/loss, best-selling product or stock. I’ll use only records saved in SALEFLOW.'}
-    if re.search(r'\\b(bought|buy|purchased|purchase|vanginen|vaanginen|vaangirukken|stock vaang)\\b|வாங்கினேன்|வாங்கிருக்கேன்',low) and not re.search(r'\\b(sold|sale|selling)\\b',low):
+    if re.search(r'\b(bought|buy|purchased|purchase|vanginen|vaanginen|vaangirukken|stock vaang)\b|வாங்கினேன்|வாங்கிருக்கேன்',low) and not re.search(r'\\b(sold|sale|selling)\\b',low):
         return {'message':'Got it 😊 You’re telling me about a purchase/stock-in, not a customer sale. I won’t add it to sales or profit. Update stock and cost under Products; tell me if you meant you sold the item instead.'}
     sale=detect_sale(raw)
     if sale:
