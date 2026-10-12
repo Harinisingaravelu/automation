@@ -153,41 +153,124 @@ def update_sale(sid,data):
     c.execute("""UPDATE sales SET sold_at=?,product_id=?,quantity=?,selling_price=?,cost_price=?,revenue=?,discount=?,profit=?,cost_known=1,payment_method=?,status=? WHERE id=?""",(str(data.get("date") or old["sold_at"])[:10]+" "+datetime.now().strftime("%H:%M:%S.%f"),pid,qty,sell,cost,rev,discount,profit,data.get("payment_method",old["payment_method"]),data.get("status",old["status"]),sid));c.commit();c.close();return row("""SELECT s.id,s.sold_at,s.sale_type,p.id product_id,p.name product,p.category,s.quantity,s.selling_price,s.cost_price,s.revenue,s.discount,s.profit,s.cost_known,s.payment_method,s.status FROM sales s JOIN products p ON p.id=s.product_id WHERE s.id=?""",(sid,))
 
 def assistant(msg, language='auto'):
-    raw=str(msg or '').strip(); low=raw.lower()
-    ta=language=='ta' or (language=='auto' and (re.search(r'[\u0B80-\u0BFF]',raw) or any(w in low for w in ['inniku','innaiku','evlo','evalo','laabam','nashtam','vithen','vaanginen','enna','irukka','sollu','tamil'])))
-    def reply(en, tamil): return {'message':tamil if ta else en}
-    if re.fullmatch(r'(hi|hii+|hello|hey|hey there|vanakkam|வணக்கம்|ஹாய்|ஹலோ)[!. ,]*',low):
-        return reply('Hi 😊 I’m FLOWI, your sales companion! How’s business today? Ask me about saved sales, profit/loss or stock.','வணக்கம் 😊 நான் FLOWI! உங்கள் sales companion. இன்று business எப்படி போகிறது? சேமிக்கப்பட்ட sales, profit/loss அல்லது stock பற்றி கேளுங்கள்.')
-    if re.search(r'\b(bought|buy|purchased|purchase|vanginen|vaanginen|vaangirukken|stock vaang)\b|வாங்கினேன்|வாங்கிருக்கேன்',low) and not re.search(r'\b(sold|sale|selling)\b|விற்ற',low):
-        return reply('Got it 😊 This sounds like a purchase/stock-in, not a customer sale. I will not add it to sales or profit. Update stock and cost under Products.','சரி 😊 இது customer-க்கு விற்ற sale இல்லை; பொருள் வாங்கியது/stock-in போலத் தெரிகிறது. இதை sales அல்லது profit-ல் சேர்க்கவில்லை. Products பகுதியில் stock மற்றும் cost-ஐ update செய்யுங்கள்.')
-    sale=detect_sale(raw)
+    raw = str(msg or '').strip()
+    low = raw.lower()
+    tamil_script = bool(re.search(r'[\u0B80-\u0BFF]', raw))
+    tamil_words = ['inniku','innaiku','innikku','evlo','evalo','laabam','nashtam','varumanam','vandhuchu','vanta','enna','irukka','sollu','tamil','loss ah','profit ah']
+    ta = language == 'ta' or (language == 'auto' and (tamil_script or any(w in low for w in tamil_words)))
+
+    def reply(en, tamil):
+        return {'message': tamil if ta else en}
+
+    if re.fullmatch(r'(hi|hii+|hello|hey|hey there|vanakkam|வணக்கம்|ஹாய்|ஹலோ)[!. ,]*', low):
+        return reply(
+            "Hey 😊 I’m FLOWI, your friendly sales companion! How’s your business going today? I can check your saved sales, profit, loss, products and stock.",
+            "ஹாய் 😊 நான் FLOWI, உங்க friendly sales companion! இன்று business எப்படி போகுது? Saved sales, profit, loss, products, stock எல்லாத்தையும் பார்த்துச் சொல்ல உதவுகிறேன்."
+        )
+
+    if re.search(r'\b(bought|buy|purchased|purchase|vanginen|vaanginen|vaangirukken|stock vaang)\b|வாங்கினேன்|வாங்கிருக்கேன்|வாங்கின', low) and not re.search(r'\b(sold|sell|sale|selling)\b|விற்ற|விற்பனை', low):
+        return reply(
+            "Got it 😊 This sounds like stock you purchased, not a customer sale. I won't count it as sales or profit. Update the product stock and cost in Products so future profit calculations stay accurate.",
+            "சரி 😊 இது customer-க்கு விற்ற sale இல்லை; நீங்க stock வாங்கியது போல இருக்கு. இதை sales/profit-ல் சேர்க்க மாட்டேன். Products பகுதியில் stock மற்றும் cost update பண்ணுங்க; அப்போதுதான் profit கணக்கு சரியாக இருக்கும்."
+        )
+
+    # Only propose a sale when a real catalogue item, quantity and sale intent are detected.
+    sale = detect_sale(raw)
     if sale:
-        en=f"I found {sale['quantity']} × {sale['product']}. Using saved catalogue cost: revenue ₹{sale['revenue']:,.2f}, cost ₹{sale['cost']:,.2f}, estimated profit ₹{sale['profit']:,.2f}. This is NOT saved yet—confirm to record it."
-        ta_msg=f"{sale['product']} — {sale['quantity']} பொருட்கள் என கண்டறிந்தேன். Catalogue-ல் உள்ள cost அடிப்படையில் sales ₹{sale['revenue']:,.2f}, cost ₹{sale['cost']:,.2f}, கணிக்கப்பட்ட profit ₹{sale['profit']:,.2f}. இது இன்னும் save செய்யப்படவில்லை; உறுதிப்படுத்தினால் மட்டும் பதிவு செய்யப்படும்."
-        return {'message':ta_msg if ta else en,'sale_detected':sale}
-    period='today' if any(x in low for x in ['today','todays',"today's",'inniku','innaiku','இன்று','இன்னிக்கு','இன்றைய']) else 'this_month' if any(x in low for x in ['month','monthly','intha maasam','இந்த மாதம்','மாத sales','மாத விற்பனை']) else '7d' if any(x in low for x in ['week','weekly','intha vaaram','இந்த வாரம்','வாரம்']) else '30d'
-    a=analytics(period); dsh=a['dashboard']; k=dsh['kpis']; label={'today':'today','this_month':'this month','7d':'the last 7 days','30d':'the last 30 days'}[period]; tlabel={'today':'இன்று','this_month':'இந்த மாதம்','7d':'கடந்த 7 நாட்களில்','30d':'கடந்த 30 நாட்களில்'}[period]
-    if any(x in low for x in ['low stock','stock low','stock level','கையிருப்பு','ஸ்டாக்','stock irukka']):
-        items=dsh['low_stock']; en='Low stock: '+(', '.join(f"{p['name']} — {p['stock']} left" for p in items) if items else 'No products are at or below their low-stock threshold.'); tm='குறைந்த stock: '+(', '.join(f"{p['name']} — {p['stock']} மீதம்" for p in items) if items else 'Low-stock threshold-க்கு கீழே உள்ள பொருட்கள் இல்லை.')
-        return reply(en,tm)
-    if any(x in low for x in ['best','top product','most sold','best-selling','best selling','adhigama vith','அதிகம் விற்ற','best product']):
-        best=dsh['best']['units']; return reply(f"Best-selling product for {label}: {best}." if best else f"No saved sales for {label}; I can’t identify a best-selling product yet.",f"{tlabel} அதிகமாக விற்ற பொருள்: {best}." if best else f"{tlabel} sales record இல்லை. அதனால் அதிகம் விற்ற பொருளை இப்போது உறுதியாகச் சொல்ல முடியாது.")
-    if any(x in low for x in ['margin','மார்ஜின்','லாப விகிதம்']): return reply(f"{label.capitalize()} profit margin is {k['margin']:.2f}%. Revenue ₹{k['revenue']:,.2f}; recorded profit ₹{k['profit']:,.2f}.",f"{tlabel} profit margin {k['margin']:.2f}%. Sales ₹{k['revenue']:,.2f}; பதிவான profit ₹{k['profit']:,.2f}.")
-    if any(x in low for x in ['loss','லாஸ்','நஷ்டம்','nashtam']):
-        loss=abs(float(k.get('loss',0)))
-        if k.get('pending_cost',0): return reply(f"Complete profit/loss cannot be confirmed: {k['pending_cost']} sale(s) have unknown cost. Revenue ₹{k['revenue']:,.2f}.",f"முழு profit/loss-ஐ உறுதி செய்ய முடியவில்லை: {k['pending_cost']} sale-க்கு cost பதிவு செய்யவில்லை. Sales ₹{k['revenue']:,.2f}.")
-        return reply((f"{label.capitalize()} recorded loss is ₹{loss:,.2f}." if loss>0 else f"No loss is recorded for {label}. Net profit is ₹{k['profit']:,.2f}."),(f"{tlabel} பதிவான நஷ்டம் ₹{loss:,.2f}." if loss>0 else f"{tlabel} பதிவான நஷ்டம் இல்லை. Net profit ₹{k['profit']:,.2f}."))
-    if any(x in low for x in ['profit','லாபம்','laabam','profit evlo']):
-        if k.get('pending_cost',0): return reply(f"{label.capitalize()} revenue ₹{k['revenue']:,.2f} from {k['orders']} orders ({k['items']} items). Verified profit ₹{k['profit']:,.2f}; {k['pending_cost']} sale(s) have missing cost, so total profit is incomplete.",f"{tlabel} {k['orders']} orders, {k['items']} items. Sales ₹{k['revenue']:,.2f}. உறுதிப்படுத்திய profit ₹{k['profit']:,.2f}; {k['pending_cost']} sale-க்கு cost இல்லை, அதனால் முழு profit கணக்கு கிடைக்கவில்லை.")
-        return reply(f"{label.capitalize()} profit is ₹{k['profit']:,.2f}. Revenue ₹{k['revenue']:,.2f}; recorded cost ₹{k['cost']:,.2f}; {k['orders']} orders and {k['items']} items. Calculated from saved records.",f"{tlabel} profit ₹{k['profit']:,.2f}. Sales ₹{k['revenue']:,.2f}; பதிவு செய்த cost ₹{k['cost']:,.2f}; {k['orders']} orders, {k['items']} items. Database-ல் சேமித்த records அடிப்படையில் கணக்கிட்டது.")
-    if any(x in low for x in ['sale','sales','revenue','turnover','vithanai','விற்பனை','sales amount','evlo sales','எவ்வளவு sales','items sold','items to be sold','எத்தனை பொருள்']):
-        note=f" Cost missing for {k['pending_cost']} sale(s), so total cost/profit is incomplete." if k.get('pending_cost') else f" Recorded cost ₹{k['cost']:,.2f}."
-        tn=f" {k['pending_cost']} sale-க்கு cost இல்லை; ஆகவே முழு cost/profit உறுதியாகத் தெரியாது." if k.get('pending_cost') else f" பதிவு செய்த cost ₹{k['cost']:,.2f}."
-        return reply(f"{label.capitalize()} sales: ₹{k['revenue']:,.2f}; {k['orders']} orders; {k['items']} items.{note} Verified profit ₹{k['profit']:,.2f}.",f"{tlabel} sales ₹{k['revenue']:,.2f}; {k['orders']} orders; {k['items']} பொருட்கள் விற்பனை.{tn} உறுதிப்படுத்திய profit ₹{k['profit']:,.2f}.")
-    if any(x in low for x in ['report','summary','overview','details','சுருக்கம்','மொத்தம்']):
-        note=f" {k['pending_cost']} sale(s) have unknown costs." if k.get('pending_cost') else ' All included sales have cost data.'; tn=f" {k['pending_cost']} sale-க்கு cost இல்லை." if k.get('pending_cost') else ' கணக்கில் உள்ள sales அனைத்துக்கும் cost உள்ளது.'
-        return reply(f"{label.capitalize()} summary: revenue ₹{k['revenue']:,.2f}; cost ₹{k['cost']:,.2f}; verified profit ₹{k['profit']:,.2f}; orders {k['orders']}; items {k['items']}; margin {k['margin']:.2f}%."+note,f"{tlabel} சுருக்கம்: sales ₹{k['revenue']:,.2f}; cost ₹{k['cost']:,.2f}; உறுதிப்படுத்திய profit ₹{k['profit']:,.2f}; orders {k['orders']}; items {k['items']}; margin {k['margin']:.2f}%."+tn)
-    return reply('I can help 😊 Ask about today’s sales, profit, loss, items sold, best-selling product or low stock. I use saved SALEFLOW records only and never guess missing numbers.','நான் உதவுகிறேன் 😊 இன்று sales எவ்வளவு, profit எவ்வளவு, loss இருக்கிறதா, எத்தனை items விற்றது, best product அல்லது low stock பற்றி கேளுங்கள். SALEFLOW-ல் சேமித்த உண்மையான data மட்டும் பயன்படுத்துவேன்; தெரியாத கணக்கை ஊகித்துச் சொல்லமாட்டேன்.')
+        en = f"I found {sale['quantity']} × {sale['product']}. Using its saved catalogue cost: sales ₹{sale['revenue']:,.2f}, cost ₹{sale['cost']:,.2f}, estimated profit ₹{sale['profit']:,.2f}. This is only a preview and has NOT been saved yet."
+        tm = f"{sale['product']} — {sale['quantity']} பொருட்கள் என கண்டறிந்தேன். Saved catalogue cost அடிப்படையில் sales ₹{sale['revenue']:,.2f}, cost ₹{sale['cost']:,.2f}, கணிக்கப்பட்ட profit ₹{sale['profit']:,.2f}. இது preview மட்டும்; இன்னும் database-ல் save செய்யவில்லை."
+        return {'message': tm if ta else en, 'sale_detected': sale}
+
+    today_words = ['today', "today's", 'todays', 'inniku', 'innaiku', 'innikku', 'இன்று', 'இன்றைய', 'இன்னிக்கு', 'இன்னைக்கு', 'இன்றைக்கு', 'இன்றைக்கு']
+    month_words = ['this month', 'monthly', 'month', 'intha maasam', 'இந்த மாதம்', 'மாத sales', 'மாத விற்பனை']
+    week_words = ['this week', 'weekly', 'last 7 days', 'intha vaaram', 'இந்த வாரம்', 'வாரம்']
+    if any(w in low for w in today_words):
+        period = 'today'
+    elif any(w in low for w in month_words):
+        period = 'this_month'
+    elif any(w in low for w in week_words):
+        period = '7d'
+    else:
+        period = '30d'
+
+    data = analytics(period)
+    d = data['dashboard']
+    k = d['kpis']
+    labels = {'today': 'today', 'this_month': 'this month', '7d': 'the last 7 days', '30d': 'the last 30 days'}
+    tlabels = {'today': 'இன்று', 'this_month': 'இந்த மாதம்', '7d': 'கடந்த 7 நாட்களில்', '30d': 'கடந்த 30 நாட்களில்'}
+    label, tlab = labels[period], tlabels[period]
+
+    asks_sales = any(w in low for w in ['sales', 'sale', 'revenue', 'turnover', 'income', 'sold', 'வருமானம்', 'வந்துச்சு', 'வந்தது', 'விற்பனை', 'விற்றது', 'எவ்வளவு sales', 'sales evlo', 'evlo sales'])
+    asks_profit = any(w in low for w in ['profit', 'லாபம்', 'பிராபிட்', 'laabam', 'profit evlo', 'லாபம் எவ்வளவு'])
+    asks_loss = any(w in low for w in ['loss', 'லாஸ்', 'நஷ்டம்', 'நஷ்டமா', 'nashtam'])
+    asks_items = any(w in low for w in ['items', 'units', 'quantity', 'how many', 'எத்தனை', 'பொருட்கள்', 'items sold', 'evlo items'])
+    asks_summary = any(w in low for w in ['summary', 'overview', 'report', 'மொத்தம்', 'சுருக்கம்'])
+    asks_stock = any(w in low for w in ['low stock', 'stock low', 'stock level', 'கையிருப்பு', 'ஸ்டாக்', 'stock irukka'])
+
+    if asks_stock:
+        items = d['low_stock']
+        if items:
+            en = 'These products are at or below their low-stock threshold: ' + ', '.join(f"{p['name']} ({p['stock']} left)" for p in items) + '.'
+            tm = 'குறைந்த stock உள்ள பொருட்கள்: ' + ', '.join(f"{p['name']} ({p['stock']} மீதம்)" for p in items) + '.'
+        else:
+            en = 'Good news 😊 No products are currently at or below their low-stock threshold.'
+            tm = 'நல்ல செய்தி 😊 இப்போது low-stock limit-க்கு கீழே எந்தப் பொருளும் இல்லை.'
+        return reply(en, tm)
+
+    if any(w in low for w in ['best', 'top product', 'most sold', 'best-selling', 'best selling', 'அதிகம் விற்ற', 'best product']):
+        best = d['best']['units']
+        return reply(
+            f"The best-selling product for {label} is {best}." if best else f"There are no saved sales for {label}, so I can't identify a best-selling product yet.",
+            f"{tlab} அதிகமாக விற்ற பொருள் {best}." if best else f"{tlab} sales record இல்லை; அதனால் அதிகம் விற்ற பொருளை இன்னும் உறுதியாகச் சொல்ல முடியவில்லை."
+        )
+
+    # A combined question must receive a combined, period-specific answer, not just the loss branch.
+    if asks_summary or (asks_sales and (asks_profit or asks_loss or asks_items)) or (asks_profit and asks_loss):
+        incomplete_en = f" Note: {k['pending_cost']} sale(s) have no saved cost, so total profit/loss cannot be fully verified." if k.get('pending_cost') else ""
+        incomplete_ta = f" குறிப்பு: {k['pending_cost']} sale-க்கு cost பதிவு செய்யப்படவில்லை; அதனால் முழு profit/loss-ஐ உறுதிப்படுத்த முடியாது." if k.get('pending_cost') else ""
+        loss = abs(float(k.get('loss', 0)))
+        loss_en = f" Recorded net loss: ₹{loss:,.2f}." if loss > 0 else " No net loss is recorded."
+        loss_ta = f" பதிவான net loss ₹{loss:,.2f}." if loss > 0 else " பதிவுகளில் net loss இல்லை."
+        return reply(
+            f"Here’s your {label} summary from saved SALEFLOW records 😊 Sales/revenue: ₹{k['revenue']:,.2f}. Recorded cost: ₹{k['cost']:,.2f}. Verified profit: ₹{k['profit']:,.2f}. Orders: {k['orders']}. Items sold: {k['items']}. Profit margin: {k['margin']:.2f}%.{loss_en}{incomplete_en}",
+            f"உங்க {tlab} SALEFLOW records summary இதோ 😊 Sales/வருமானம்: ₹{k['revenue']:,.2f}. பதிவு செய்த cost: ₹{k['cost']:,.2f}. உறுதிப்படுத்திய profit: ₹{k['profit']:,.2f}. Orders: {k['orders']}. விற்ற items: {k['items']}. Profit margin: {k['margin']:.2f}%.{loss_ta}{incomplete_ta}"
+        )
+
+    if asks_loss:
+        loss = abs(float(k.get('loss', 0)))
+        if k.get('pending_cost', 0):
+            return reply(
+                f"I can't fully verify {label} profit/loss because {k['pending_cost']} sale(s) have no saved cost. Recorded revenue is ₹{k['revenue']:,.2f}.",
+                f"{tlab} profit/loss-ஐ முழுமையாக உறுதிப்படுத்த முடியவில்லை; {k['pending_cost']} sale-க்கு cost பதிவு செய்யவில்லை. பதிவான sales ₹{k['revenue']:,.2f}."
+            )
+        return reply(
+            f"{label.capitalize()}: recorded net loss is ₹{loss:,.2f}." if loss else f"{label.capitalize()}: no net loss is recorded. Net profit is ₹{k['profit']:,.2f}.",
+            f"{tlab} பதிவான net loss ₹{loss:,.2f}." if loss else f"{tlab} பதிவுகளில் net loss இல்லை. Net profit ₹{k['profit']:,.2f}."
+        )
+
+    if asks_profit:
+        if k.get('pending_cost', 0):
+            return reply(
+                f"{label.capitalize()} revenue is ₹{k['revenue']:,.2f} across {k['orders']} orders and {k['items']} items. Verified profit is ₹{k['profit']:,.2f}, but {k['pending_cost']} sale(s) have missing cost, so the full profit is not yet known.",
+                f"{tlab} sales ₹{k['revenue']:,.2f}; {k['orders']} orders, {k['items']} items. உறுதிப்படுத்திய profit ₹{k['profit']:,.2f}; ஆனால் {k['pending_cost']} sale-க்கு cost இல்லை, அதனால் முழு profit இன்னும் தெரியவில்லை."
+            )
+        return reply(
+            f"{label.capitalize()} profit is ₹{k['profit']:,.2f}. Sales ₹{k['revenue']:,.2f}; cost ₹{k['cost']:,.2f}; {k['orders']} orders and {k['items']} items. This is calculated from saved records.",
+            f"{tlab} profit ₹{k['profit']:,.2f}. Sales ₹{k['revenue']:,.2f}; cost ₹{k['cost']:,.2f}; {k['orders']} orders, {k['items']} items. இது database-ல் சேமித்த records அடிப்படையில் கணக்கிட்டது."
+        )
+
+    if asks_sales or asks_items:
+        note_en = f" {k['pending_cost']} sale(s) have missing cost; profit may be incomplete." if k.get('pending_cost') else f" Recorded cost: ₹{k['cost']:,.2f}; verified profit: ₹{k['profit']:,.2f}."
+        note_ta = f" {k['pending_cost']} sale-க்கு cost இல்லை; profit முழுமையாக இருக்காது." if k.get('pending_cost') else f" பதிவு செய்த cost ₹{k['cost']:,.2f}; உறுதிப்படுத்திய profit ₹{k['profit']:,.2f}."
+        return reply(
+            f"{label.capitalize()} saved sales: ₹{k['revenue']:,.2f}. Orders: {k['orders']}; items sold: {k['items']}.{note_en}",
+            f"{tlab} database-ல் பதிவான sales ₹{k['revenue']:,.2f}. Orders: {k['orders']}; விற்ற items: {k['items']}.{note_ta}"
+        )
+
+    return reply(
+        "I’m here to help 😊 Ask me “How much did I sell today?”, “What’s today’s profit and loss?”, “How many items were sold?” or “Which products are low in stock?” I’ll use saved records only and tell you when information is missing.",
+        "நான் இருக்கேன் 😊 “இன்னைக்கு எவ்வளவு sales?”, “profit, loss எவ்வளவு?”, “எத்தனை items விற்றது?”, “எந்த products stock குறைவு?” என்று கேளுங்கள். Database-ல் உள்ள உண்மையான records மட்டும் பயன்படுத்துவேன்; தகவல் இல்லையென்றால் தெளிவாகச் சொல்வேன்."
+    )
 
 @app.route("/")
 def home():
