@@ -77,7 +77,7 @@
 </section>
 
 <section id="view-add" class="view">
-  <div class="hero"><div><h2>Add Sale</h2><p>Record a completed transaction and automatically update stock, revenue and profit.</p></div></div>
+  <div class="hero"><div><p>Record a completed transaction. Stock, revenue and profit update after saving.</p></div></div>
   <div class="panel"><h3 class="section-title">Sale Details</h3><form id="saleForm" onsubmit="submitSale(event)"><div class="form-grid">
     <div class="field"><label>Product</label><select id="saleProduct" required></select></div>
     <div class="field"><label>Quantity</label><input id="saleQty" class="input" type="number" min="1" value="1" required></div>
@@ -95,29 +95,29 @@
 </section>
 
 <section id="view-products" class="view">
-  <div class="hero"><div><h2>Products & Stock</h2><p>Manage catalogue, prices and inventory thresholds.</p></div><button class="btn" onclick="openProductForm()">➕ Add Product</button></div>
+  <div class="hero"><div><p>Manage your catalogue, pricing and inventory thresholds.</p></div><button class="btn" onclick="openProductForm()">➕ Add Product</button></div>
   <div id="productFormPanel" class="panel" style="display:none;margin-bottom:15px"><h3 class="section-title" id="productFormTitle">Add Product</h3><form onsubmit="submitProduct(event)"><input id="productId" type="hidden"><div class="form-grid"><div class="field"><label>Name</label><input id="productName" class="input" required></div><div class="field"><label>Category</label><input id="productCategory" class="input" value="General"></div><div class="field"><label>Cost Price</label><input id="productCost" class="input" type="number" min="0" step=".01" required></div><div class="field"><label>Selling Price</label><input id="productSell" class="input" type="number" min="0" step=".01" required></div><div class="field"><label>Stock</label><input id="productStock" class="input" type="number" min="0" required></div><div class="field"><label>Low Stock Threshold</label><input id="productThreshold" class="input" type="number" min="0" value="10" required></div></div><div class="actions"><button class="btn">Save Product</button><button type="button" class="btn secondary" onclick="closeProductForm()">Cancel</button></div></form></div>
   <div id="productsGrid" class="cards"></div>
 </section>
 
 <section id="view-analytics" class="view">
-  <div class="hero"><div><h2>Analytics</h2><p>Understand revenue, profit, products and category performance.</p></div><div class="filters"><button class="filter active" onclick="setAnalyticsPeriod('30d',this)">30 Days</button><button class="filter" onclick="setAnalyticsPeriod('7d',this)">7 Days</button><button class="filter" onclick="setAnalyticsPeriod('all',this)">All Time</button></div></div>
+  <div class="hero"><div><p>Explore revenue, profit, product and category performance.</p></div><div class="filters"><button class="filter active" onclick="setAnalyticsPeriod('30d',this)">30 Days</button><button class="filter" onclick="setAnalyticsPeriod('7d',this)">7 Days</button><button class="filter" onclick="setAnalyticsPeriod('all',this)">All Time</button></div></div>
   <div class="mini-grid" style="margin-bottom:16px"><div class="mini"><small>Revenue</small><strong id="anRevenue">₹0</strong></div><div class="mini"><small>Profit</small><strong id="anProfit">₹0</strong></div><div class="mini"><small>Margin</small><strong id="anMargin">0%</strong></div></div>
   <div class="analytics-grid"><div class="panel"><div class="panel-head"><div><h3>Revenue Trend</h3><span>Selected period</span></div></div><div id="anChart" class="chart"></div></div><div class="panel"><div class="panel-head"><div><h3>Category Performance</h3><span>Revenue and profit</span></div></div><div id="categoryList"></div></div></div>
 </section>
 
 <section id="view-reports" class="view">
-  <div class="hero"><div><h2>Reports</h2><p>Create and review business reports from your stored sales data.</p></div><button class="btn" onclick="createReport()">Generate Today's Report</button></div>
+  <div class="hero"><div><p>Create reports from your saved sales data.</p></div><button class="btn" onclick="createReport()">Generate Today's Report</button></div>
   <div class="cards" id="reportCards"></div>
 </section>
 
 <section id="view-export" class="view">
-  <div class="hero"><div><h2>Export Center</h2><p>Download your sales and product data for Excel, Power BI or analysis.</p></div></div>
+  <div class="hero"><div><p>Download sales and product data for Excel, Power BI or further analysis.</p></div></div>
   <div class="cards"><div class="report-card"><h3>📄 Sales CSV</h3><p>Download all sales records as CSV.</p><button class="btn" onclick="downloadExport('sales_csv')">Download CSV</button></div><div class="report-card"><h3>📊 Sales Excel</h3><p>Download sales in an Excel workbook.</p><button class="btn green" onclick="downloadExport('sales_excel')">Download Excel</button></div><div class="report-card"><h3>📦 Products CSV</h3><p>Download catalogue, stock and product performance.</p><button class="btn" onclick="downloadExport('products_csv')">Download Products</button></div></div>
 </section>
 
 <section id="view-settings" class="view">
-  <div class="hero"><div><h2>Settings</h2><p>Manage your SALEFLOW workspace settings.</p></div></div>
+  <div class="hero"><div><p>Manage your business profile and workspace preferences.</p></div></div>
   <div class="panel"><h3 class="section-title">Business Settings</h3><div class="form-grid"><div class="field"><label>Business Name</label><input id="setBusiness" class="input"></div><div class="field"><label>Currency</label><select id="setCurrency"><option>INR</option><option>USD</option></select></div><div class="field"><label>Owner / User</label><input id="setOwner" class="input"></div></div><div class="actions"><button class="btn" onclick="saveSettings()">Save Settings</button><button class="btn red" onclick="resetSales()">Reset Sales & Reports</button></div></div>
 </section>
 </main>
