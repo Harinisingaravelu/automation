@@ -200,7 +200,7 @@ def assistant(msg, language='auto'):
     tlabels = {'today': 'இன்று', 'this_month': 'இந்த மாதம்', '7d': 'கடந்த 7 நாட்களில்', '30d': 'கடந்த 30 நாட்களில்'}
     label, tlab = labels[period], tlabels[period]
 
-    asks_sales = any(w in low for w in ['sales', 'sale', 'revenue', 'turnover', 'income', 'sold', 'வருமானம்', 'வந்துச்சு', 'வந்தது', 'விற்பனை', 'விற்றது', 'எவ்வளவு sales', 'sales evlo', 'evlo sales'])
+    asks_sales = any(w in low for w in ['sales', 'sale', 'revenue', 'turnover', 'income', 'sold', 'varumanam', 'vandhuchu', 'varumanam vandhuchu', 'வருமானம்', 'வந்துச்சு', 'வந்துச்ச', 'வந்தது', 'வந்த', 'விற்பனை', 'விற்றது', 'எவ்வளவு sales', 'sales evlo', 'evlo sales'])
     asks_profit = any(w in low for w in ['profit', 'லாபம்', 'பிராபிட்', 'laabam', 'profit evlo', 'லாபம் எவ்வளவு'])
     asks_loss = any(w in low for w in ['loss', 'லாஸ்', 'நஷ்டம்', 'நஷ்டமா', 'nashtam'])
     asks_items = any(w in low for w in ['items', 'units', 'quantity', 'how many', 'எத்தனை', 'பொருட்கள்', 'items sold', 'evlo items'])
