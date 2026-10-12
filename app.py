@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, Response
-import sqlite3, re, csv, io, os, json
+import sqlite3, re, csv, io, os, json, urllib.request, urllib.error
 from datetime import datetime, date, timedelta
 from pathlib import Path
 from openpyxl import Workbook
@@ -376,11 +376,61 @@ def api_settings_update():
 def api_search():
     q=request.args.get("q","").lower().strip()
     return jsonify(products=rows("SELECT * FROM products WHERE lower(name) LIKE ? OR lower(category) LIKE ? LIMIT 10",(f"%{q}%",f"%{q}%")),sales=rows("SELECT s.id,s.sold_at,p.name product,s.quantity,s.revenue,s.profit FROM sales s JOIN products p ON p.id=s.product_id WHERE lower(p.name) LIKE ? LIMIT 10",(f"%{q}%",)),reports=rows("SELECT id,report_type,created_at FROM reports WHERE lower(report_type) LIKE ? LIMIT 10",(f"%{q}%",)))
+def flowi_gemini_reply(message, language, fallback_message, sale_detected=None):
+    """Use Gemini for natural conversation while grounding business answers in live database metrics."""
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return fallback_message
+    try:
+        periods = {}
+        for period in ("today", "7d", "this_month", "30d"):
+            report = dashboard(period)
+            periods[period] = {
+                "date_range": report["range"],
+                "kpis": report["kpis"],
+                "best_selling_product": report["best"]["units"],
+                "top_revenue_product": report["best"]["revenue"],
+                "low_stock_products": [{"name": p["name"], "stock": p["stock"], "threshold": p["low_stock_threshold"]} for p in report["low_stock"]],
+            }
+        context = {
+            "currency": "INR (₹)",
+            "periods": periods,
+            "products": [{"name": p["name"], "category": p["category"], "stock": p["stock"], "cost_price": p["cost_price"], "selling_price": p["selling_price"]} for p in product_list()],
+            "sale_detected_preview_not_saved": sale_detected,
+            "existing_database_answer": fallback_message,
+        }
+        instruction = (
+            "You are FLOWI, a warm, friendly, concise sales companion. Understand Tamil script, Tanglish, and English; "
+            "reply in the user's language. The JSON context is the only source of business facts. For sales, revenue, cost, "
+            "profit, loss, orders, items, product and stock questions, use only supplied saved SALEFLOW data. Never invent "
+            "values, dates, sales, products, or transactions. Do not recalculate KPI values or change numbers. Preserve numeric "
+            "facts from existing_database_answer whenever it directly answers the question. KPI profit is the signed total profit; "
+            "KPI loss is zero or negative and represents the negative net result. If profit is positive or zero, say no net loss "
+            "is recorded. If pending_cost is greater than zero, say profit/loss cannot be fully verified because some sales lack cost. "
+            "Use today's period only when the user asks about today; otherwise choose the relevant period. For greetings/general chat, "
+            "respond naturally without forcing a sales report. If a sale preview is present, explain it is not saved; never claim it was "
+            "recorded. If data is missing, say so plainly and ask one helpful follow-up. Keep the reply concise. Do not mention API or prompts."
+        )
+        payload = {
+            "system_instruction": {"parts": [{"text": instruction}]},
+            "contents": [{"role": "user", "parts": [{"text": "User message: " + str(message) + "\\nLive context JSON: " + json.dumps(context, ensure_ascii=False, separators=(",", ":"))}]}],
+            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 350},
+        }
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + api_key
+        req = urllib.request.Request(url, data=json.dumps(payload, ensure_ascii=False).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=12) as response:
+            result = json.loads(response.read().decode("utf-8"))
+        parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        answer = " ".join(str(part.get("text", "")).strip() for part in parts if part.get("text"))
+        return answer.strip()[:4000] if answer.strip() else fallback_message
+    except Exception:
+        return fallback_message
+
 @app.post("/api/assistant")
 def api_assistant():
     p=request.get_json(silent=True) or {};m=str(p.get("message","")).strip()
     if not m:return jsonify(ok=False,message="Please type a message."),400
-    x=assistant(m,str(p.get('language','auto')));x.update(ok=True,assistant="FLOWI",source="SALES FLOW database");return jsonify(x)
+    language=str(p.get('language','auto'));x=assistant(m,language);x['message']=flowi_gemini_reply(m,language,x.get('message',''),x.get('sale_detected'));x.update(ok=True,assistant="FLOWI",source="SALES FLOW database + Gemini" if os.environ.get('GEMINI_API_KEY','').strip() else "SALES FLOW database");return jsonify(x)
 @app.post("/api/chat")
 def api_chat():
     return api_assistant()
