@@ -267,9 +267,27 @@ def assistant(msg, language='auto'):
             f"{tlab} database-ல் பதிவான sales ₹{k['revenue']:,.2f}. Orders: {k['orders']}; விற்ற items: {k['items']}.{note_ta}"
         )
 
+    # Avoid repeating the same canned list when the user's wording is conversational or unclear.
+    if any(w in low for w in ['tamil la', 'tamil-le', 'tamilil', 'தமிழில்', 'தமிழ்ல', 'english la', 'english-le', 'ஆங்கிலத்தில்', 'புரியும்படி', 'simple ah', 'simple-a', 'explain', 'explain pannu', 'sollu', 'சொல்லு', 'சொல்லுங்க']):
+        if not k['orders']:
+            return reply(
+                "Of course 😊 I can explain in simple language. I don't have any saved sales for this period yet, so I can't calculate real profit or loss. Add your actual sales and make sure each product has its correct cost price; then I'll calculate from those records.",
+                "சரி 😊 எளிமையாகத் தமிழில் சொல்கிறேன். இந்தக் காலத்துக்கு database-ல் sales பதிவு இல்லை; அதனால் உண்மையான profit/loss கணக்கிட முடியாது. உங்களுடைய sales-ஐ பதிவு செய்து, ஒவ்வொரு product-க்கும் சரியான cost price கொடுத்தால், அந்த records-லிருந்து கணக்கிட்டுச் சொல்கிறேன்."
+            )
+        return reply(
+            f"Sure 😊 For {label}, your saved records show sales ₹{k['revenue']:,.2f}, verified profit ₹{k['profit']:,.2f}, and {k['orders']} orders. I’ll keep the explanation simple and use only your database records.",
+            f"சரி 😊 {tlab} database records-ல் sales ₹{k['revenue']:,.2f}, உறுதிப்படுத்திய profit ₹{k['profit']:,.2f}, orders {k['orders']}. இனிமேல் எளிமையாகச் சொல்கிறேன்; database records-ஐ மட்டுமே பயன்படுத்துவேன்."
+        )
+
+    if not k['orders'] and any(w in low for w in ['what', 'என்ன', 'எப்படி', 'epdi', 'enna', 'help', 'உதவி']):
+        return reply(
+            "I can help with your sales records. There are no saved sales in the selected period yet, so I won't invent figures. Add a sale with the correct selling price and cost price, and I'll calculate revenue, profit and loss.",
+            "உங்கள் sales records-ஐப் பார்த்து உதவ முடியும். தேர்ந்தெடுத்த காலத்தில் sales பதிவு இல்லை; அதனால் கற்பனையாக எண்களைச் சொல்ல மாட்டேன். சரியான selling price, cost price உடன் sale சேர்த்தால் revenue, profit, loss கணக்கிட்டுச் சொல்கிறேன்."
+        )
+
     return reply(
-        "I’m here to help 😊 Ask me “How much did I sell today?”, “What’s today’s profit and loss?”, “How many items were sold?” or “Which products are low in stock?” I’ll use saved records only and tell you when information is missing.",
-        "நான் இருக்கேன் 😊 “இன்னைக்கு எவ்வளவு sales?”, “profit, loss எவ்வளவு?”, “எத்தனை items விற்றது?”, “எந்த products stock குறைவு?” என்று கேளுங்கள். Database-ல் உள்ள உண்மையான records மட்டும் பயன்படுத்துவேன்; தகவல் இல்லையென்றால் தெளிவாகச் சொல்வேன்."
+        "I may have misunderstood that. Could you rephrase your question once? I’ll check the saved sales and product records and answer directly without guessing.",
+        "உங்கள் கேள்வியைச் சரியாகப் புரிந்துகொள்ளாமல் இருக்கலாம். ஒருமுறை வேறு விதமாகச் சொல்ல முடியுமா? Saved sales மற்றும் product records பார்த்து, ஊகிக்காமல் நேரடியாகப் பதில் சொல்கிறேன்."
     )
 
 @app.route("/")
