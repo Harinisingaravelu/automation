@@ -90,7 +90,7 @@
 </section>
 
 <section id="view-records" class="view">
-  <div class="hero"><div><h2>Sales Records</h2><p>Every saved transaction with revenue, cost and profit.</p></div><button class="btn" onclick="showView('add')">➕ Add Sale</button></div>
+  <div class="hero records-hero"><div><p class="section-intro">Search, review and manage saved transactions with a clear breakdown of revenue, cost and profit.</p></div><button class="btn" onclick="showView('add')">➕ Add Sale</button></div>
   <div class="panel"><div class="search-bar" style="display:flex;gap:8px;margin-bottom:12px"><input id="salesSearch" class="input" placeholder="Search product..." oninput="renderRecords()"><button class="btn secondary" onclick="loadData()">Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Payment</th><th>Status</th><th>Action</th></tr></thead><tbody id="salesTable"></tbody></table></div></div>
 </section>
 
