@@ -157,7 +157,10 @@ def assistant(msg, language='auto'):
     low = raw.lower()
     tamil_script = bool(re.search(r'[\u0B80-\u0BFF]', raw))
     tamil_words = ['inniku','innaiku','innikku','evlo','evalo','laabam','nashtam','varumanam','vandhuchu','vanta','enna','irukka','sollu','tamil','loss ah','profit ah']
-    ta = language == 'ta' or (language == 'auto' and (tamil_script or any(w in low for w in tamil_words)))
+    # Match the language of the latest message, not a stale language preference.
+    tanglish_words = ['enna', 'epdi', 'eppadi', 'sollu', 'sollunga', 'venum', 'irukku', 'irukka', 'illa', 'pannu', 'panunga', 'evlo', 'evalo', 'inniku', 'innaiku', 'laabam', 'nashtam', 'romba', 'konjam', 'seri', 'aama', 'illai', 'thaa', 'kudunga']
+    has_tanglish = any(re.search(r'\b' + re.escape(w) + r'\b', low) for w in tanglish_words)
+    ta = bool(tamil_script or has_tanglish or (language == 'ta' and not re.search(r'[a-zA-Z]', raw)))
 
     def reply(en, tamil):
         return {'message': tamil if ta else en}
@@ -419,8 +422,12 @@ def flowi_gemini_reply(message, language, fallback_message, sale_detected=None):
             "existing_database_answer": fallback_message,
         }
         instruction = (
-            "You are FLOWI, a warm, friendly, concise sales companion. Understand Tamil script, Tanglish, and English; "
-            "reply in the user's language. The JSON context is the only source of business facts. For sales, revenue, cost, "
+            "You are FLOWI, a warm, genuinely friendly, calm, polite and professional sales companion. Speak naturally "
+            "like a kind, patient customer-service representative; avoid robotic, harsh, choppy or overly excited wording. "
+            "Detect the language of the latest user message and reply in that same language: Tamil script in natural Tamil, "
+            "Tanglish in conversational Tamil/Tanglish, and English in English. Never force English when the user uses Tamil. "
+            "Keep replies concise and do not repeat a greeting, explanation or facts already stated unless the user asks. "
+            "The JSON context is the only source of business facts. For sales, revenue, cost, "
             "profit, loss, orders, items, product and stock questions, use only supplied saved SALEFLOW data. Never invent "
             "values, dates, sales, products, or transactions. Do not recalculate KPI values or change numbers. Preserve numeric "
             "facts from existing_database_answer whenever it directly answers the question. KPI profit is the signed total profit; "
