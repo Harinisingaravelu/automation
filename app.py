@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 import sqlite3, re, csv, io, os, json, urllib.request, urllib.error
 from datetime import datetime, date, timedelta
 from pathlib import Path
@@ -292,7 +292,8 @@ def assistant(msg, language='auto'):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    # Serve the existing static HTML directly; this page contains CSS/JS braces that Jinja can misread as template syntax.
+    return send_from_directory(str(BASE / "templates"), "index.html")
 @app.after_request
 def no_cache(r):
     if request.path=="/":r.headers["Cache-Control"]="no-store, no-cache, must-revalidate, max-age=0"
