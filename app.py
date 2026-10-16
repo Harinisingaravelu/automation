@@ -346,52 +346,6 @@ def api_sales_create():
         p.update(d)
     try:return jsonify(ok=True,sale=save_sale(p))
     except ValueError as e:return jsonify(ok=False,message=str(e)),400
-@app.post("/api/sales/bill")
-def api_sales_bill():
-    payload=request.get_json(silent=True) or {}
-    items=payload.get("items") or []
-    if not items:return jsonify(ok=False,message="Add at least one product to the bill."),400
-    payment=str(payload.get("payment_method","Cash"))
-    sold_date=str(payload.get("date") or date.today().isoformat())[:10]
-    bill_discount=float(payload.get("bill_discount",0) or 0)
-    c=get_db()
-    try:
-        totals={};normalized=[];subtotal=0.0
-        for item in items:
-            pid=int(item["product_id"]);qty=int(item["quantity"]);sell=float(item["selling_price"]);cost=float(item["cost_price"])
-            if qty<=0 or sell<0 or cost<0:raise ValueError("Invalid quantity or price in bill.")
-            totals[pid]=totals.get(pid,0)+qty
-            amount=round(qty*sell,2);subtotal+=amount
-            normalized.append((pid,qty,sell,cost,amount))
-        subtotal=round(subtotal,2)
-        if bill_discount<0 or bill_discount>subtotal:raise ValueError("Discount cannot exceed the bill subtotal.")
-        for pid,qty in totals.items():
-            product=c.execute("SELECT id,name,stock FROM products WHERE id=?",(pid,)).fetchone()
-            if not product:raise ValueError("A selected product no longer exists. Refresh and try again.")
-            if product["stock"]<qty:raise ValueError(f"Only {product['stock']} units of {product['name']} are available.")
-        grand_total=0.0;discount_left=round(bill_discount,2);gross_left=subtotal
-        for index,(pid,qty,sell,cost,amount) in enumerate(normalized):
-            if index==len(normalized)-1:
-                line_discount=discount_left
-            else:
-                line_discount=round(bill_discount*amount/subtotal,2) if subtotal else 0.0
-                line_discount=min(line_discount,discount_left,amount)
-            discount_left=round(discount_left-line_discount,2)
-            gross_left=round(gross_left-amount,2)
-            revenue=round(amount-line_discount,2);profit=round(revenue-qty*cost,2)
-            c.execute("""INSERT INTO sales(sold_at,product_id,quantity,selling_price,cost_price,revenue,discount,profit,cost_known,payment_method,status)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?)""",(sold_date+" "+datetime.now().strftime("%H:%M:%S.%f"),pid,qty,sell,cost,revenue,line_discount,profit,1,payment,"Completed"))
-            c.execute("UPDATE products SET stock=stock-? WHERE id=?",(qty,pid))
-            grand_total+=revenue
-        if discount_left>0.009:raise ValueError("Could not allocate the full bill discount. Please retry.")
-        c.commit()
-        return jsonify(ok=True,total=money(round(grand_total,2)),items=len(normalized))
-    except (ValueError,KeyError,TypeError,sqlite3.Error) as e:
-        c.rollback()
-        return jsonify(ok=False,message=str(e) or "Could not save bill."),400
-    finally:
-        c.close()
-
 @app.post("/api/sales/manual")
 def api_manual():return api_sales_create()
 @app.put("/api/sales/<int:sid>")
