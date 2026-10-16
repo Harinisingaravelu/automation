@@ -346,6 +346,43 @@ def api_sales_create():
         p.update(d)
     try:return jsonify(ok=True,sale=save_sale(p))
     except ValueError as e:return jsonify(ok=False,message=str(e)),400
+@app.post("/api/sales/bill")
+def api_sales_bill():
+    payload=request.get_json(silent=True) or {}
+    items=payload.get("items") or []
+    if not items:return jsonify(ok=False,message="Add at least one product to the bill."),400
+    payment=str(payload.get("payment_method","Cash"))
+    sold_date=str(payload.get("date") or date.today().isoformat())[:10]
+    c=get_db()
+    try:
+        totals={}
+        normalized=[]
+        for item in items:
+            pid=int(item["product_id"]);qty=int(item["quantity"]);sell=float(item["selling_price"]);cost=float(item["cost_price"]);discount=float(item.get("discount",0) or 0)
+            if qty<=0 or sell<0 or cost<0 or discount<0:raise ValueError("Invalid quantity, price or discount in bill.")
+            totals[pid]=totals.get(pid,0)+qty
+            normalized.append((pid,qty,sell,cost,discount))
+        for pid,qty in totals.items():
+            product=c.execute("SELECT id,name,stock FROM products WHERE id=?",(pid,)).fetchone()
+            if not product:raise ValueError("A selected product no longer exists. Refresh and try again.")
+            if product["stock"]<qty:raise ValueError(f"Only {product['stock']} units of {product['name']} are available.")
+        grand_total=0
+        for pid,qty,sell,cost,discount in normalized:
+            amount=qty*sell
+            if discount>amount:raise ValueError("Discount cannot exceed the first item amount.")
+            revenue=amount-discount;profit=revenue-qty*cost
+            c.execute("""INSERT INTO sales(sold_at,product_id,quantity,selling_price,cost_price,revenue,discount,profit,cost_known,payment_method,status)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?)""",(sold_date+" "+datetime.now().strftime("%H:%M:%S.%f"),pid,qty,sell,cost,revenue,discount,profit,1,payment,"Completed"))
+            c.execute("UPDATE products SET stock=stock-? WHERE id=?",(qty,pid))
+            grand_total+=revenue
+        c.commit()
+        return jsonify(ok=True,total=money(grand_total),items=len(normalized))
+    except (ValueError,KeyError,TypeError,sqlite3.Error) as e:
+        c.rollback()
+        return jsonify(ok=False,message=str(e) or "Could not save bill."),400
+    finally:
+        c.close()
+
 @app.post("/api/sales/manual")
 def api_manual():return api_sales_create()
 @app.put("/api/sales/<int:sid>")
