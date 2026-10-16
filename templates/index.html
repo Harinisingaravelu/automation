@@ -187,6 +187,25 @@ tbody tr:hover{background:#f8faff}
 </section>
 
 <section id="view-add" class="view">
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-head"><div><h3 class="section-title">🧾 Quick Billing · New</h3><span>Choose products, build a cart and save the bill to Sales Records.</span></div></div>
+    <div class="form-grid">
+      <div class="field"><label>Choose Product</label><select id="billProduct" class="input"></select></div>
+      <div class="field"><label>Quantity</label><input id="billQty" class="input" type="number" min="1" value="1"></div>
+      <div class="field"><label>Selling Price / Unit (₹)</label><input id="billPrice" class="input" type="number" min="0" step="0.01"></div>
+      <div class="field"><label>Available Stock</label><input id="billStock" class="input" readonly></div>
+    </div>
+    <div class="actions"><button class="btn" type="button" onclick="billAddItem()">＋ Add to Bill</button><button class="btn secondary" type="button" onclick="billClear()">Clear Bill</button></div>
+    <div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>Product</th><th>Qty</th><th>Price / Unit</th><th>Amount</th><th>Remove</th></tr></thead><tbody id="billItems"><tr><td colspan="5">No products added yet.</td></tr></tbody></table></div>
+    <div class="form-grid" style="margin-top:12px">
+      <div class="field"><label>Bill Discount (₹)</label><input id="billDiscount" class="input" type="number" min="0" step="0.01" value="0" oninput="billRender()"></div>
+      <div class="field"><label>Payment Method</label><select id="billPayment" class="input"><option>Cash</option><option>UPI</option><option>Card</option><option>Bank Transfer</option><option>Other</option></select></div>
+      <div class="field"><label>Bill Date</label><input id="billDate" class="input" type="date"></div>
+    </div>
+    <div class="mini-grid" style="margin-top:12px"><div class="mini"><small>Subtotal</small><strong id="billSubtotal">₹0.00</strong></div><div class="mini"><small>Discount</small><strong id="billDiscountTotal">₹0.00</strong></div><div class="mini"><small>Grand Total</small><strong id="billGrandTotal">₹0.00</strong></div><div class="mini"><small>Total Items</small><strong id="billItemCount">0</strong></div></div>
+    <div class="actions"><button id="billSaveBtn" class="btn green" type="button" onclick="billSave()">✓ Complete Bill & Save Sale</button></div>
+    <p style="font-size:12px;color:#64748b;margin-top:8px">Uses saved product prices and available stock. Saving updates stock and Sales Records together.</p>
+  </div>
   <div class="panel"><h3 class="section-title">Sale Details</h3><form id="saleForm" onsubmit="submitSale(event)"><div class="form-grid">
     <div class="field"><label>Product</label><select id="saleProduct" required></select></div>
     <div class="field"><label>Quantity</label><input id="saleQty" class="input" type="number" min="1" value="1" required></div>
@@ -253,7 +272,7 @@ async function api(url,opts={}){const r=await fetch(url,{cache:'no-store',...opt
 async function loadData(){
  try{const [s,p,d]=await Promise.all([api('/api/sales'),api('/api/products'),api('/api/dashboard?period='+state.period)]);state.sales=s;state.products=p;state.dashboard=d;renderAll();updateFlowiContext();setProductOptions()}catch(e){console.error(e);toast('Could not load saved data.')}
 }
-function renderAll(){renderDashboard();renderRecords();renderProducts();renderAnalytics();loadReports();setProductOptions()}
+function renderAll(){renderDashboard();renderRecords();renderProducts();renderAnalytics();loadReports();setProductOptions();billSetOptions()}
 async function setDashboardPeriod(period,btn){state.period=period;document.querySelectorAll('#view-dashboard .filter').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');try{state.dashboard=await api('/api/dashboard?period='+period);renderDashboard()}catch(e){toast(e.message)}}
 function renderDashboard(){
  const d=state.dashboard;if(!d)return;const k=d.kpis||{},p=d.previous||{};
@@ -269,6 +288,15 @@ function renderChart(id,trend){const box=$(id);if(!trend.length){box.innerHTML='
 function renderTopProducts(items){const b=$('dashTopProducts');if(!items.length){b.innerHTML='<div class="empty">No product sales in this period.</div>';return}const max=Math.max(...items.map(x=>Number(x.revenue||0)),1);b.innerHTML=items.slice(0,6).map((x,i)=>'<div class="rank"><div class="rank-no">'+(i+1)+'</div><div><div class="rank-name">'+esc(x.product)+'</div><div class="rank-meta">'+x.units_sold+' units · '+x.margin+'% margin</div><div class="bar"><span style="width:'+Math.max(5,Number(x.revenue||0)/max*100)+'%"></span></div></div><div class="rank-value">'+money(x.revenue)+'</div></div>').join('')}
 function renderStock(items){const b=$('dashStockWatch');if(!items.length){b.innerHTML='<div class="empty">✓ Stock levels look healthy.</div>';return}b.innerHTML=items.map(x=>{const n=Number(x.stock||0),c=n===0?'danger':'warn';return '<div class="stock"><div><b>'+esc(x.name)+'</b><small>'+esc(x.category||'General')+' · threshold '+x.low_stock_threshold+'</small></div><span class="badge '+c+'">'+(n===0?'Out of stock':n+' left')+'</span></div>'}).join('')}
 function renderRecent(){const b=$('dashRecentSales'),xs=state.sales||[];if(!xs.length){b.innerHTML='<tr><td colspan="3" class="empty">No sales yet.</td></tr>';return}b.innerHTML=xs.slice(0,7).map(x=>'<tr><td><b>'+esc(x.product)+'</b></td><td>'+x.quantity+'</td><td class="profit">'+money(x.revenue)+'</td></tr>').join('')}
+let billCart=[];
+function billMoney(n){return '₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function billSetOptions(){const s=$('billProduct');if(!s)return;const old=s.value;s.innerHTML=state.products.filter(p=>Number(p.stock)>0).map(p=>'<option value="'+p.id+'" data-sell="'+p.selling_price+'" data-cost="'+p.cost_price+'" data-stock="'+p.stock+'">'+esc(p.name)+' · '+p.stock+' in stock</option>').join('');if([...s.options].some(o=>o.value===old))s.value=old;billProductChanged();if($('billDate')&&!$('billDate').value)$('billDate').value=today()}
+function billProductChanged(){const s=$('billProduct'),o=s?.selectedOptions?.[0];if(!o){$('billPrice').value='';$('billStock').value='0';return}$('billPrice').value=o.dataset.sell||0;$('billStock').value=o.dataset.stock||0}
+function billAddItem(){const s=$('billProduct'),o=s?.selectedOptions?.[0];if(!o){toast('No product in stock. Add stock in Products first.');return}const id=Number(o.value),qty=Number($('billQty').value),price=Number($('billPrice').value),p=state.products.find(x=>Number(x.id)===id);if(!p||!Number.isInteger(qty)||qty<1||!Number.isFinite(price)||price<0){toast('Choose a product, valid quantity and price.');return}const existing=billCart.find(x=>x.product_id===id&&x.selling_price===price);const already=billCart.filter(x=>x.product_id===id).reduce((n,x)=>n+x.quantity,0);if(already+qty>Number(p.stock)){toast('Only '+Math.max(0,Number(p.stock)-already)+' more '+p.name+' available.');return}if(existing)existing.quantity+=qty;else billCart.push({product_id:id,product:p.name,quantity:qty,selling_price:price,cost_price:Number(p.cost_price)});$('billQty').value=1;billRender()}
+function billRemoveItem(i){billCart.splice(i,1);billRender()}
+function billRender(){const body=$('billItems');if(!body)return;body.innerHTML=billCart.length?billCart.map((x,i)=>'<tr><td>'+esc(x.product)+'</td><td>'+x.quantity+'</td><td>'+billMoney(x.selling_price)+'</td><td>'+billMoney(x.quantity*x.selling_price)+'</td><td><button type="button" class="btn secondary small" onclick="billRemoveItem('+i+')">Remove</button></td></tr>').join(''):'<tr><td colspan="5">No products added yet.</td></tr>';const subtotal=billCart.reduce((n,x)=>n+x.quantity*x.selling_price,0),discount=Math.max(0,Number($('billDiscount')?.value||0)),grand=subtotal-discount;$('billSubtotal').textContent=billMoney(subtotal);$('billDiscountTotal').textContent=billMoney(discount);$('billGrandTotal').textContent=billMoney(Math.max(0,grand));$('billItemCount').textContent=billCart.reduce((n,x)=>n+x.quantity,0);if(discount>subtotal){$('billGrandTotal').textContent='Discount exceeds subtotal';$('billSaveBtn').disabled=true}else $('billSaveBtn').disabled=!billCart.length}
+function billClear(){billCart=[];$('billDiscount').value=0;billRender()}
+async function billSave(){if(!billCart.length){toast('Add at least one product to the bill.');return}const subtotal=billCart.reduce((n,x)=>n+x.quantity*x.selling_price,0),discount=Number($('billDiscount').value||0);if(discount<0||discount>subtotal){toast('Discount must not exceed the bill subtotal.');return}const btn=$('billSaveBtn');btn.disabled=true;btn.textContent='Saving bill…';try{const result=await api('/api/sales/bill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:billCart.map((x,i)=>({...x,discount:i===0?discount:0})),payment_method:$('billPayment').value,date:$('billDate').value})});billCart=[];$('billDiscount').value=0;billRender();await loadData();toast('Bill saved! Total '+billMoney(result.total)+' · stock and Sales Records updated.');showView('records')}catch(e){toast(e.message||'Could not save bill.')}finally{btn.textContent='✓ Complete Bill & Save Sale';billRender()}}
 function setProductOptions(){const s=$('saleProduct');if(!s)return;s.innerHTML=state.products.map(p=>'<option value="'+p.id+'" data-cost="'+p.cost_price+'" data-sell="'+p.selling_price+'">'+esc(p.name)+' · stock '+p.stock+'</option>').join('');setDefaultSaleFields()}
 function setDefaultSaleFields(){const s=$('saleProduct'),o=s?.selectedOptions?.[0];if(o){$('salePrice').value=o.dataset.sell||0;$('saleCost').value=o.dataset.cost||0}if($('saleDate'))$('saleDate').value=today()}
 function submitSale(e){e.preventDefault();const p={product_id:Number($('saleProduct').value),quantity:Number($('saleQty').value),selling_price:Number($('salePrice').value),cost_price:Number($('saleCost').value),discount:Number($('saleDiscount').value||0),payment_method:$('salePayment').value,date:$('saleDate').value};api('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(()=>{toast('Sale saved successfully.');$('saleForm').reset();setDefaultSaleFields();loadData();showView('records')}).catch(e=>toast(e.message))}
@@ -298,7 +326,7 @@ function addSaleConfirmation(original,sale){const b=$('messages'),row=document.c
 function quickAsk(q){$('assistantInput').value=q;assistantSend()}
 function addMessage(type,text){const b=$('messages'),row=document.createElement('div');row.className='msg '+type;row.innerHTML=(type==='bot'?'<div class="avatar" style="width:28px;height:28px;font-size:9px">F</div>':'')+'<div class="bubble">'+esc(text).replace(/\n/g,'<br>')+'</div>';b.appendChild(row);b.scrollTop=b.scrollHeight}
 async function updateFlowiContext(){try{const d=await api('/api/dashboard?period=today'),k=d.kpis||{};$('ctxRevenue').textContent=money(k.revenue);$('ctxProfit').textContent=money(k.profit);$('ctxOrders').textContent=k.orders||0;$('ctxItems').textContent=k.items||0;$('ctxTop').textContent=d.best?.units||'—'}catch(e){}}
-$('saleProduct').addEventListener('change',setDefaultSaleFields);
+$('saleProduct').addEventListener('change',setDefaultSaleFields);$('billProduct').addEventListener('change',billProductChanged);
 $('todayLabel').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
 setDefaultSaleFields();loadData();
 </script>
