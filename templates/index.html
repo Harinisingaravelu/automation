@@ -331,8 +331,8 @@ function renderRecent(){const b=$('dashRecentSales'),xs=state.sales||[];if(!xs.l
 function setProductOptions(){const s=$('saleProduct');if(!s)return;s.innerHTML=state.products.map(p=>'<option value="'+p.id+'" data-cost="'+p.cost_price+'" data-sell="'+p.selling_price+'">'+esc(p.name)+' · stock '+p.stock+'</option>').join('');setDefaultSaleFields()}
 function setDefaultSaleFields(){const s=$('saleProduct'),o=s?.selectedOptions?.[0];if(o){$('salePrice').value=o.dataset.sell||0;$('saleCost').value=o.dataset.cost||0}if($('saleDate'))$('saleDate').value=today()}
 function submitSale(e){e.preventDefault();const p={product_id:Number($('saleProduct').value),quantity:Number($('saleQty').value),selling_price:Number($('salePrice').value),cost_price:Number($('saleCost').value),discount:Number($('saleDiscount').value||0),payment_method:$('salePayment').value,date:$('saleDate').value};api('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(()=>{toast('Sale saved successfully.');$('saleForm').reset();setDefaultSaleFields();loadData();
-// Dismiss the optional launch splash; all existing app behavior remains unchanged.
-window.setTimeout(()=>{const s=document.getElementById('sfSplash');if(s)s.classList.add('sf-hidden');},2300);showView('records')}).catch(e=>toast(e.message))}
+// Hide the optional splash after startup so the existing SALEFLOW app is revealed.
+window.setTimeout(()=>{const splash=document.getElementById('sfSplash');if(splash)splash.classList.add('sf-hidden');},3200);showView('records')}).catch(e=>toast(e.message))}
 let selectedSalesIds=new Set();
 function getVisibleSales(){const q=($('salesSearch')?.value||'').trim().toLowerCase();return state.sales.filter(x=>!q||String(x.product).toLowerCase().includes(q)||String(x.sold_at||'').toLowerCase().includes(q)||String(x.payment_method||'').toLowerCase().includes(q))}
 function toggleSelectAllSales(checked){getVisibleSales().forEach(x=>checked?selectedSalesIds.add(Number(x.id)):selectedSalesIds.delete(Number(x.id)));renderRecords()}
