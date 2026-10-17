@@ -121,9 +121,68 @@ tbody tr:hover{background:#f8faff}
  *,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
 
+
+/* SALEFLOW launch splash — additive only */
+#sfSplash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:space-between;overflow:auto;padding:28px 18px 24px;background:radial-gradient(ellipse at 50% 45%,#fff 0%,#f5fbff 42%,#d9efff 100%);color:#10275e;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;transition:opacity .45s ease,visibility .45s ease}
+#sfSplash.sf-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.sf-status{width:100%;max-width:560px;display:flex;justify-content:space-between;color:#fff;font-weight:700;text-shadow:0 1px 5px #8ab9f0}
+.sf-brand{display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:clamp(8px,2vh,28px)}
+.sf-mark{width:92px;height:76px;border-radius:25px;background:linear-gradient(145deg,#173fe0,#11c8e7);display:grid;place-items:center;color:white;font-size:47px;box-shadow:0 12px 28px #2e8df54a;transform:rotate(-5deg)}
+.sf-brand h1{font-size:clamp(38px,7vw,58px);font-weight:900;letter-spacing:-2px;margin:15px 0 2px;background:linear-gradient(90deg,#071a63,#087dff,#21c99b);color:transparent;background-clip:text}
+.sf-brand p{font-size:clamp(13px,2.4vw,18px);margin:0;color:#122d71;letter-spacing:.2px}
+.sf-stage{width:min(100%,640px);display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:center;gap:8px;margin:22px auto 12px}
+.sf-features{display:flex;flex-direction:column;gap:16px}
+.sf-feature{display:flex;align-items:center;gap:8px;font-size:clamp(10px,1.8vw,13px);font-weight:650;line-height:1.3}
+.sf-feature:nth-child(2){margin-left:8px}
+.sf-feature .sf-dot{flex:0 0 38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:19px;box-shadow:0 5px 14px #3a8ff433;border:3px solid #fff}
+.sf-features.right .sf-feature{flex-direction:row}
+.sf-robot-wrap{position:relative;display:flex;align-items:center;justify-content:center;min-height:210px}
+.sf-orbit{position:absolute;width:95%;aspect-ratio:1;border:1px solid #5dd8ff85;border-radius:50%;box-shadow:0 0 25px #42c9ff22}
+.sf-robot{position:relative;width:min(100%,190px);aspect-ratio:1.05;border-radius:35% 35% 29% 29%;background:linear-gradient(145deg,#fff 4%,#bdeaff 44%,#3184ff 90%);border:5px solid #e8fbff;box-shadow:inset -9px -9px 18px #1557c86b,0 14px 30px #188cf45c;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:1}
+.sf-robot:before{content:"";position:absolute;top:13%;left:-11%;width:16%;height:43%;border-radius:14px;background:linear-gradient(#48c9ff,#164de4);box-shadow:180px 0 0 #2867ed}
+.sf-face{width:82%;height:54%;border-radius:28px;background:linear-gradient(145deg,#061d63,#0a49a7);box-shadow:inset 0 0 12px #36d8ff;display:flex;align-items:center;justify-content:center;gap:20%;border:2px solid #67dfff}
+.sf-eye{width:14px;height:22px;border-radius:100%;background:#4ee9ff;box-shadow:0 0 12px #2adfff}
+.sf-robot-name{font-weight:900;color:#1268ed;margin-top:7px;font-size:14px}
+.sf-wave{width:100%;height:8px;border-radius:50%;background:linear-gradient(90deg,#1687ff,#4de7dc,#8466ff);filter:blur(1px);margin-top:9px}
+.sf-greeting{position:absolute;top:-4px;left:-14%;width:135%;padding:11px;border:1px solid #a4e9ff;border-radius:18px;background:#ffffffd9;box-shadow:0 8px 20px #4ebaff25;font-size:clamp(10px,1.8vw,13px);line-height:1.4;z-index:3}
+.sf-greeting b{color:#1256cf;font-size:1.1em}
+.sf-dashcards{width:min(100%,420px);display:flex;gap:10px;justify-content:center;margin:-5px auto 10px;position:relative;z-index:4}
+.sf-dashcard{flex:1;min-width:0;padding:12px;border:1px solid #fff;border-radius:15px;background:#ffffffbd;box-shadow:0 7px 20px #2586e52a;backdrop-filter:blur(8px)}
+.sf-bars{height:45px;display:flex;align-items:end;gap:5px;margin-top:8px}
+.sf-bars i{display:block;flex:1;border-radius:4px 4px 0 0;background:linear-gradient(#1bd8c5,#297bff)}
+.sf-bars i:nth-child(1){height:28%}.sf-bars i:nth-child(2){height:44%}.sf-bars i:nth-child(3){height:58%}.sf-bars i:nth-child(4){height:74%}.sf-bars i:nth-child(5){height:100%}
+.sf-mini-table{font-size:10px;line-height:1.9;color:#173d83}.sf-mini-table b{color:#08a875}
+.sf-loading{width:min(100%,450px);text-align:center;color:#fff;font-size:14px;text-shadow:0 1px 5px #1a5dcc;padding-top:8px}
+.sf-progress{height:14px;border-radius:99px;border:2px solid #fff;background:#dcecffaa;overflow:hidden;margin:13px auto;width:90%;box-shadow:0 2px 10px #388cf53d}
+.sf-progress span{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#2487ff,#22d3ce,#8b5cf6);animation:sfLoad 2.15s ease-out forwards}
+.sf-dots{display:flex;justify-content:center;gap:10px;margin-top:16px}.sf-dots i{width:9px;height:9px;border-radius:50%;background:#ffffffb8;animation:sfPulse 1s infinite alternate}.sf-dots i:nth-child(2){animation-delay:.2s}.sf-dots i:nth-child(3){animation-delay:.4s}
+@keyframes sfLoad{to{width:100%}}@keyframes sfPulse{to{opacity:.35;transform:scale(.8)}}
+@media(max-width:430px){#sfSplash{padding:20px 12px 22px}.sf-stage{grid-template-columns:.85fr 1.1fr .85fr;gap:4px}.sf-feature{gap:4px;font-size:9px}.sf-feature .sf-dot{flex-basis:30px;height:30px;font-size:15px}.sf-robot-wrap{min-height:185px}.sf-robot{width:155px}.sf-greeting{left:-18%;width:140%;padding:8px}.sf-brand{margin-top:0}.sf-mark{width:72px;height:60px;font-size:38px}}
+@media(prefers-reduced-motion:reduce){.sf-progress span,.sf-dots i{animation:none}#sfSplash{transition:none}}
+
 </style>
 </head>
 <body>
+
+<div id="sfSplash" role="status" aria-label="Loading SALEFLOW">
+  <div class="sf-status"><span>9:41</span><span>▮▮▮　◉　▰</span></div>
+  <div class="sf-brand"><div class="sf-mark" aria-hidden="true">↗</div><h1>SALEFLOW</h1><p>Turn Sales into Smart Profits.</p></div>
+  <div class="sf-stage">
+    <div class="sf-features">
+      <div class="sf-feature"><span class="sf-dot" style="background:linear-gradient(135deg,#48a6ff,#1559e8)">▤</span><span>Smart<br>Billing</span></div>
+      <div class="sf-feature"><span class="sf-dot" style="background:linear-gradient(135deg,#5ce77c,#11a957)">↗</span><span>Profit &amp; Loss<br>Analytics</span></div>
+    </div>
+    <div class="sf-robot-wrap"><div class="sf-orbit"></div><div class="sf-greeting"><b>Hi! I’m FLOWI 👋</b><br>Your AI Business Assistant.<br>Let’s make your business smarter &amp; simpler!</div><div class="sf-robot"><div class="sf-face"><i class="sf-eye"></i><i class="sf-eye"></i></div><div class="sf-robot-name">FLOWI</div><div class="sf-wave"></div></div></div>
+    <div class="sf-features right">
+      <div class="sf-feature"><span class="sf-dot" style="background:linear-gradient(135deg,#ad73ff,#6835e8)">▦</span><span>Inventory &amp;<br>Stock</span></div>
+      <div class="sf-feature"><span class="sf-dot" style="background:linear-gradient(135deg,#ffc64c,#f28a13)">▣</span><span>AI Business<br>Assistant</span></div>
+      <div class="sf-feature"><span class="sf-dot" style="background:linear-gradient(135deg,#37dfe0,#168cce)">▤</span><span>Reports &amp;<br>Insights</span></div>
+    </div>
+  </div>
+  <div class="sf-dashcards"><div class="sf-dashcard"><strong>Sales performance</strong><div class="sf-bars"><i></i><i></i><i></i><i></i><i></i></div></div><div class="sf-dashcard"><strong>Recent sales</strong><div class="sf-mini-table">Product　Qty　<b>Profit</b><br>T-Shirt　2　<b>₹1,500</b><br>Jeans　1　<b>₹800</b></div></div></div>
+  <div class="sf-loading">Loading your smart business assistant...<div class="sf-progress"><span></span></div><div class="sf-dots"><i></i><i></i><i></i></div></div>
+</div>
+
 <div class="app">
 <aside id="sidebar" class="sidebar">
   <div class="brand"><div class="logo">↗</div> SALEFLOW</div>
@@ -271,7 +330,9 @@ function renderStock(items){const b=$('dashStockWatch');if(!items.length){b.inne
 function renderRecent(){const b=$('dashRecentSales'),xs=state.sales||[];if(!xs.length){b.innerHTML='<tr><td colspan="3" class="empty">No sales yet.</td></tr>';return}b.innerHTML=xs.slice(0,7).map(x=>'<tr><td><b>'+esc(x.product)+'</b></td><td>'+x.quantity+'</td><td class="profit">'+money(x.revenue)+'</td></tr>').join('')}
 function setProductOptions(){const s=$('saleProduct');if(!s)return;s.innerHTML=state.products.map(p=>'<option value="'+p.id+'" data-cost="'+p.cost_price+'" data-sell="'+p.selling_price+'">'+esc(p.name)+' · stock '+p.stock+'</option>').join('');setDefaultSaleFields()}
 function setDefaultSaleFields(){const s=$('saleProduct'),o=s?.selectedOptions?.[0];if(o){$('salePrice').value=o.dataset.sell||0;$('saleCost').value=o.dataset.cost||0}if($('saleDate'))$('saleDate').value=today()}
-function submitSale(e){e.preventDefault();const p={product_id:Number($('saleProduct').value),quantity:Number($('saleQty').value),selling_price:Number($('salePrice').value),cost_price:Number($('saleCost').value),discount:Number($('saleDiscount').value||0),payment_method:$('salePayment').value,date:$('saleDate').value};api('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(()=>{toast('Sale saved successfully.');$('saleForm').reset();setDefaultSaleFields();loadData();showView('records')}).catch(e=>toast(e.message))}
+function submitSale(e){e.preventDefault();const p={product_id:Number($('saleProduct').value),quantity:Number($('saleQty').value),selling_price:Number($('salePrice').value),cost_price:Number($('saleCost').value),discount:Number($('saleDiscount').value||0),payment_method:$('salePayment').value,date:$('saleDate').value};api('/api/sales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(()=>{toast('Sale saved successfully.');$('saleForm').reset();setDefaultSaleFields();loadData();
+// Dismiss the optional launch splash; all existing app behavior remains unchanged.
+window.setTimeout(()=>{const s=document.getElementById('sfSplash');if(s)s.classList.add('sf-hidden');},2300);showView('records')}).catch(e=>toast(e.message))}
 let selectedSalesIds=new Set();
 function getVisibleSales(){const q=($('salesSearch')?.value||'').trim().toLowerCase();return state.sales.filter(x=>!q||String(x.product).toLowerCase().includes(q)||String(x.sold_at||'').toLowerCase().includes(q)||String(x.payment_method||'').toLowerCase().includes(q))}
 function toggleSelectAllSales(checked){getVisibleSales().forEach(x=>checked?selectedSalesIds.add(Number(x.id)):selectedSalesIds.delete(Number(x.id)));renderRecords()}
