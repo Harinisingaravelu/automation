@@ -392,7 +392,12 @@ def api_sales_bulk_delete():
 def api_stock():return jsonify(product_list())
 
 @app.get("/api/reports")
-def api_reports():return jsonify(rows("SELECT id,report_type,period_start,period_end,created_at FROM reports ORDER BY id DESC LIMIT 50"))
+def api_reports():
+    items=rows("SELECT id,report_type,period_start,period_end,created_at,payload FROM reports ORDER BY id DESC LIMIT 50")
+    for item in items:
+        try:item["report"]=json.loads(item.pop("payload") or "{}")
+        except (TypeError,ValueError):item["report"]={}
+    return jsonify(items)
 @app.post("/api/reports")
 def api_report():
     p=request.get_json(silent=True) or {};d=dashboard(p.get("period","today"),p.get("start"),p.get("end"));c=get_db();cur=c.execute("INSERT INTO reports(report_type,period_start,period_end,payload) VALUES(?,?,?,?)",(p.get("report_type","Business Report"),d["range"]["start"],d["range"]["end"],json.dumps(d)));c.commit();c.close();return jsonify(ok=True,id=cur.lastrowid,report=d)
