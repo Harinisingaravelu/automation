@@ -357,6 +357,37 @@ def api_sales_delete(sid):
     c=get_db();x=c.execute("SELECT product_id,quantity FROM sales WHERE id=?",(sid,)).fetchone()
     if not x:c.close();return jsonify(ok=False,message="Sale not found."),404
     c.execute("UPDATE products SET stock=stock+? WHERE id=?",(x["quantity"],x["product_id"]));c.execute("DELETE FROM sales WHERE id=?",(sid,));c.commit();c.close();return jsonify(ok=True)
+@app.post("/api/sales/bulk-delete")
+def api_sales_bulk_delete():
+    payload=request.get_json(silent=True) or {}
+    raw_ids=payload.get("ids") or []
+    if not isinstance(raw_ids,list) or not raw_ids:
+        return jsonify(ok=False,message="Select at least one sale record."),400
+    try:
+        ids=list(dict.fromkeys(int(x) for x in raw_ids))
+    except (TypeError,ValueError):
+        return jsonify(ok=False,message="Invalid sale record selection."),400
+    if any(x<=0 for x in ids):
+        return jsonify(ok=False,message="Invalid sale record selection."),400
+    c=get_db()
+    try:
+        c.execute("BEGIN IMMEDIATE")
+        placeholders=",".join("?" for _ in ids)
+        found=c.execute(f"SELECT id,product_id,quantity FROM sales WHERE id IN ({placeholders})",ids).fetchall()
+        if len(found)!=len(ids):
+            c.rollback()
+            return jsonify(ok=False,message="Some selected records no longer exist. Refresh and try again; nothing was deleted."),409
+        for sale in found:
+            c.execute("UPDATE products SET stock=stock+? WHERE id=?",(sale["quantity"],sale["product_id"]))
+        c.execute(f"DELETE FROM sales WHERE id IN ({placeholders})",ids)
+        c.commit()
+        return jsonify(ok=True,deleted=len(found))
+    except sqlite3.Error:
+        c.rollback()
+        return jsonify(ok=False,message="Could not delete selected records. No changes were saved."),500
+    finally:
+        c.close()
+
 @app.get("/api/stock")
 def api_stock():return jsonify(product_list())
 
