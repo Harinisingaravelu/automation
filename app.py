@@ -452,11 +452,22 @@ def flowi_gemini_reply(message, language, fallback_message, sale_detected=None):
             "sale_detected_preview_not_saved": sale_detected,
             "existing_database_answer": fallback_message,
         }
+        raw_user = str(message or "").strip()
+        has_tamil_script = bool(re.search(r"[\\u0B80-\\u0BFF]", raw_user))
+        tanglish_markers = ["enna", "epdi", "eppadi", "sollu", "sollunga", "venum", "irukku", "irukka", "illa", "pannu", "panunga", "evlo", "evalo", "inniku", "innaiku", "laabam", "nashtam", "romba", "konjam", "seri", "aama", "illai", "thaa", "kudunga"]
+        has_tanglish = any(re.search(r"\\b" + re.escape(word) + r"\\b", raw_user.lower()) for word in tanglish_markers)
+        if has_tamil_script:
+            language_rule = "MANDATORY LANGUAGE: Reply in natural Tamil written in Tamil script. You may use common business terms naturally, but the main response must be Tamil. Do not reply only in English."
+        elif has_tanglish:
+            language_rule = "MANDATORY LANGUAGE: Reply in friendly conversational Tanglish (Tamil spoken naturally, written in Latin letters), matching the user's style. Do not switch to formal English."
+        elif language == "ta":
+            language_rule = "MANDATORY LANGUAGE: Reply in natural Tamil written in Tamil script. Do not reply only in English."
+        else:
+            language_rule = "MANDATORY LANGUAGE: Reply in English because the latest user message is English."
         instruction = (
             "You are FLOWI, a warm, genuinely friendly, calm, polite and professional sales companion. Speak naturally "
             "like a kind, patient customer-service representative; avoid robotic, harsh, choppy or overly excited wording. "
-            "Detect the language of the latest user message and reply in that same language: Tamil script in natural Tamil, "
-            "Tanglish in conversational Tamil/Tanglish, and English in English. Never force English when the user uses Tamil. "
+            + language_rule + " "
             "Keep replies concise and do not repeat a greeting, explanation or facts already stated unless the user asks. "
             "The JSON context is the only source of business facts. For sales, revenue, cost, "
             "profit, loss, orders, items, product and stock questions, use only supplied saved SALEFLOW data. Never invent "
