@@ -250,6 +250,74 @@ tbody tr:hover{background:#17223a}
  .date-chip{background:#111a2e;color:#dbe6ff}
 }
 
+
+/* Neo Commerce Theme — visual-only layer over existing SALEFLOW UI */
+:root{
+ --blue:#2447d8;--blue2:#4263eb;--navy:#17243b;--green:#16845b;--orange:#ea7a28;--red:#d94848;--purple:#6856d9;
+ --bg:#f7f5f0;--card:#fffefa;--line:#e8e3da;--muted:#777b84;--shadow:0 12px 32px rgba(32,42,58,.07)
+}
+html{color-scheme:light}
+body{background:#f7f5f0;color:#17243b;background-image:radial-gradient(ellipse at 82% -12%,rgba(36,71,216,.06),transparent 32%),radial-gradient(ellipse at 8% 26%,rgba(234,122,40,.045),transparent 27%)}
+.sidebar{background:#fffefa;border-right:1px solid #e8e3da;box-shadow:8px 0 28px rgba(32,42,58,.035);backdrop-filter:none}
+.brand{color:#17243b}.logo{background:linear-gradient(140deg,#2447d8,#5474ed);box-shadow:0 7px 18px rgba(36,71,216,.2)}
+.brand-sub,.side-foot{color:#92939a}.side-foot{border-top-color:#eee9e1}
+.nav button{color:#626b7b}.nav button:hover{background:#f5f3ee;border-color:#e8e3da;color:#17243b}
+.nav button.active{background:#edf1ff;border-color:#dbe3ff;color:#2447d8;box-shadow:inset 3px 0 0 #2447d8}
+.main{color:#17243b}.topbar h1,.hero h2,.section-title{color:#17243b}.topbar p,.hero p{color:#777b84}
+.date-chip,.analytics-date,.analytics-toolbar,.kpi,.panel,.product-card,.report-card,.context-card,.chat-head,.composer{background:#fffefa;color:#17243b;border-color:#e8e3da;box-shadow:0 8px 24px rgba(32,42,58,.045)}
+.analytics-date{background:linear-gradient(135deg,#fffefa,#f8f6f1);border-color:#e8e3da}
+.analytics-date small,.analytics-toolbar span{color:#777b84}.analytics-date b,.analytics-toolbar b{color:#17243b}
+.kpi{border-color:#e8e3da}.kpi:after{background:linear-gradient(135deg,rgba(36,71,216,.055),transparent)}
+.kpi small,.panel-head span,.muted{color:#777b84}.kpi strong,.panel-head h3,.product-card h3,.report-card h3,.context-card strong{color:#17243b}
+.kpi-icon{background:#edf1ff;color:#2447d8}.kpi.green .kpi-icon{background:#e6f5ed;color:#16845b}.kpi.orange .kpi-icon{background:#fff0e4;color:#c76620}.kpi.purple .kpi-icon{background:#f0edff;color:#6856d9}
+.summary-row,.mini,.quick button,.an-kpi,.analytics-toolbar,.report-kpis>div{background:#f8f7f3;border-color:#e8e3da;color:#17243b}
+.summary-row span,.mini small,.quick span,.product-card p,.report-card p{color:#777b84}
+.summary-row strong.blue,.rank-value,.an-category-head strong,.an-product-value strong{color:#2447d8}
+.summary-row strong.green,.profit,.positive,.an-product-value small{color:#16845b}
+.chart-area{border-color:#ece8e0;background:repeating-linear-gradient(to bottom,transparent 0,transparent 48px,#efebe4 49px)}
+.chart-y,.chart-labels{color:#858892}.bar,.an-category-track,.an-day-track{background:#ece8e0}
+.bar span{background:linear-gradient(90deg,#2447d8,#5474ed)}.rank-no,.an-product-rank{background:#edf1ff;color:#2447d8}
+.stock{border-bottom-color:#eee9e1}.stock b,.rank-name,.an-category-head b,.an-product-row b{color:#17243b}
+.stock small,.rank-meta,.an-category-meta,.an-product-row small,.an-day-name{color:#777b84}
+.badge{background:#e6f5ed;color:#16845b}.badge.warn{background:#fff0e4;color:#b85a17}.badge.danger{background:#fdebea;color:#b42323}
+.btn{background:linear-gradient(110deg,#2447d8,#4263eb);border-color:#2447d8;color:#fff;box-shadow:0 6px 16px rgba(36,71,216,.16)}
+.btn:hover{box-shadow:0 9px 22px rgba(36,71,216,.23)}
+.btn.secondary{background:#fffefa;color:#34415a;border-color:#e1ddd5;box-shadow:none}.btn.secondary:hover,.quick button:hover{background:#f4f1eb;border-color:#c9c2b6}
+.btn.green{background:linear-gradient(110deg,#16845b,#26a879);color:#fff}.btn.red{background:linear-gradient(110deg,#c93838,#e45a5a)}
+.filter{background:#fffefa;color:#626b7b;border-color:#e4dfd6}.filter:hover{background:#f6f3ed;border-color:#b9c4ee}
+.filter.active{background:#edf1ff;border-color:#cdd8ff;color:#2447d8;box-shadow:inset 0 0 0 1px rgba(36,71,216,.04)}
+.input,select,.an-metric{background:#fffefa;color:#17243b;border-color:#ded9cf}
+.input::placeholder{color:#a2a1a0}.input:hover,select:hover{border-color:#aab9f2}
+.input:focus,select:focus{border-color:#4263eb;box-shadow:0 0 0 4px rgba(36,71,216,.1)}.field label{color:#515b6b}
+table{color:#34415a}th{background:#f7f5f0;color:#777b84;border-bottom-color:#e8e3da}
+td{color:#34415a;border-bottom-color:#eee9e1}tbody tr:hover{background:#f7f8fc}
+.report-card-rich:hover,.product-card:hover{border-color:#c6d0f6;box-shadow:0 14px 32px rgba(32,42,58,.09)}
+.report-eyebrow{color:#858892}.report-status{background:#e6f5ed;color:#16845b}
+.report-kpis small,.report-card-bottom{color:#777b84}.report-kpis strong,.report-card-bottom b{color:#17243b}
+.report-kpis .report-profit{color:#16845b}.report-card-bottom{border-top-color:#eee9e1}
+.report-empty-icon{background:#edf1ff;color:#2447d8}.report-empty h3{color:#17243b}.report-empty p{color:#777b84}
+.analytics-eyebrow{color:#2447d8}.analytics-intro h2{color:#17243b}.analytics-intro p{color:#777b84}
+.analytics-toolbar{border-color:#e8e3da}.an-kpi{background:linear-gradient(145deg,#fffefa,#f8f6f1);border-color:#e8e3da;box-shadow:0 8px 22px rgba(32,42,58,.045)}
+.an-kpi:after{opacity:.07}.an-kpi-top small,.an-kpi p{color:#777b84}.an-kpi strong{color:#17243b}
+.an-revenue{--an-tint:#2447d8}.an-profit{--an-tint:#16845b}.an-cost{--an-tint:#ea7a28}.an-orders{--an-tint:#6856d9}.an-margin{--an-tint:#168c9b}
+.an-chart-panel,.an-category-panel,.analytics-lower-grid>.panel{background:#fffefa;border-color:#e8e3da;box-shadow:0 8px 24px rgba(32,42,58,.045)}
+.an-chart-foot{color:#777b84}.an-chart-foot>span:first-child{color:#2447d8}.an-chart-foot b{color:#17243b}
+.an-category-row,.an-product-row{border-bottom-color:#eee9e1}.an-category-track span{background:linear-gradient(90deg,#2447d8,#6681ef)}
+.an-day-track span{background:linear-gradient(90deg,#2447d8,#ea7a28)}.an-day-value{color:#34415a}
+.an-insight{background:linear-gradient(110deg,#edf1ff,#fff1e5);color:#46536b;border:1px solid #e3e5ef}
+.chat-card{background:linear-gradient(160deg,#fffefa,#f7f5f0);border-color:#e8e3da;box-shadow:0 14px 34px rgba(32,42,58,.07)}
+.chat-head{background:#fffefa;border-color:#e8e3da}.avatar{background:linear-gradient(140deg,#2447d8,#ea7a28);box-shadow:0 6px 16px rgba(36,71,216,.15)}
+.chat-head small{color:#777b84}.online{color:#16845b}.messages{scrollbar-color:#c9c4bb transparent}
+.msg.bot .bubble{background:#f4f2ed;border-color:#e8e3da;color:#34415a;box-shadow:none}
+.msg.user .bubble{background:linear-gradient(130deg,#2447d8,#4263eb);color:#fff}
+.composer{background:#fffefa;border-color:#e1ddd5}.composer input{background:transparent;color:#17243b}
+.chip{background:#f8f6f1;border-color:#e8e3da;color:#596274}.chip:hover{background:#edf1ff;border-color:#cdd8ff;color:#2447d8}
+.context-card{background:#fffefa;border-color:#e8e3da}.context-card small,.context-card span{color:#777b84}
+.toast{background:#17243b;color:#fffefa;border-color:#34415a;box-shadow:0 14px 32px rgba(32,42,58,.18)}
+.alert{background:#fff0e4;border-color:#f2d1b8;color:#85451d}.empty{color:#858892}
+::selection{background:rgba(36,71,216,.18);color:#17243b}:focus-visible{outline:3px solid rgba(36,71,216,.48);outline-offset:3px}
+@media(max-width:760px){.sidebar{background:rgba(255,254,250,.99);box-shadow:18px 0 50px rgba(32,42,58,.15)}.date-chip{background:#fffefa;color:#34415a}}
+
 </style>
 </head>
 <body>
